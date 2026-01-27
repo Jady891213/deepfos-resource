@@ -34,14 +34,15 @@ const App: React.FC = () => {
   const [activeDrawerModule, setActiveDrawerModule] = useState<ModuleId | null>('recents');
   const [isAIShowing, setIsAIShowing] = useState(false);
   const [interfaceMode, setInterfaceMode] = useState<'dev' | 'user'>('dev');
+  // Initialize with Nav panel VISIBLE but sidebar COLLAPSED
   const [isNavHidden, setIsNavHidden] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(64);
   
   // Sidebar Resize Logic
-  const [sidebarWidth, setSidebarWidth] = useState(200);
   const [isResizing, setIsResizing] = useState(false);
   const isExpanded = sidebarWidth > 120;
 
-  // Multi-tab state - Default is now "元素管理"
+  // Multi-tab state - Default is "元素管理"
   const [tabs, setTabs] = useState<Tab[]>([
     { id: 'elements-view', title: '元素管理', type: 'folder' }
   ]);

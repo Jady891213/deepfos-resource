@@ -11,8 +11,8 @@ import {
   ChevronRight,
   Blocks,
   Network,
-  Code,
-  Smartphone,
+  Hammer,
+  UserCircle,
   HardDrive,
   Settings2,
   Box,
@@ -150,20 +150,20 @@ const Sidebar: React.FC<SidebarProps> = ({
             className={`flex items-center gap-2 p-1.5 rounded-lg transition-all w-full ${
               interfaceMode === 'dev' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-50'
             } ${!isExpanded && 'justify-center'}`}
-            title="开发态"
+            title="设置管理"
           >
-            <Code size={16} />
-            {width > 120 && <span className="text-[11px] font-black whitespace-nowrap" style={{ opacity: width > 160 ? 1 : 0 }}>开发态</span>}
+            <Hammer size={16} />
+            {width > 120 && <span className="text-[11px] font-black whitespace-nowrap" style={{ opacity: width > 160 ? 1 : 0 }}>设置管理</span>}
           </button>
           <button 
             onClick={() => onModeToggle('user')}
             className={`flex items-center gap-2 p-1.5 rounded-lg transition-all w-full ${
               interfaceMode === 'user' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-50'
             } ${!isExpanded && 'justify-center'}`}
-            title="运行态"
+            title="用户菜单"
           >
-            <Smartphone size={16} />
-            {width > 120 && <span className="text-[11px] font-black whitespace-nowrap" style={{ opacity: width > 160 ? 1 : 0 }}>运行态</span>}
+            <UserCircle size={16} />
+            {width > 120 && <span className="text-[11px] font-black whitespace-nowrap" style={{ opacity: width > 160 ? 1 : 0 }}>用户菜单</span>}
           </button>
         </div>
 
