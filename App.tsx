@@ -116,7 +116,7 @@ const App: React.FC = () => {
     services: '基础服务',
     v2: 'V2组件',
     finance: '场景-财务工具',
-    recents: '最近打开与搜藏',
+    recents: '收藏',
     elements: '元素管理',
     terminal: '系统控制台'
   };

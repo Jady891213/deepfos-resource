@@ -43,7 +43,7 @@ const Explorer: React.FC<ExplorerProps> = ({ activeModule, onSelectResource, isU
       { id: 'pages_cat', name: '页面展现', icon: <Layout size={14} className="text-blue-500" />, items: [
         { name: '电子表格', icon: <FileSpreadsheet size={12} className="text-emerald-500" /> },
         { name: 'UX 设计器', icon: <Box size={12} className="text-indigo-500" /> }
-      ]}
+      ]},
     ],
     logic: [
       { id: 'logic_cat', name: '流程逻辑', icon: <Workflow size={14} className="text-blue-500" />, items: [

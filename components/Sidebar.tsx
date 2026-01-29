@@ -61,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   ] as const;
 
   const devFunctionalItems = [
-    { id: 'recents', icon: <Star size={18} />, label: '最近打开与搜藏' },
+    { id: 'recents', icon: <Star size={18} />, label: '收藏' },
     { id: 'elements', icon: <Blocks size={18} />, label: '元素管理' },
   ] as const;
 
