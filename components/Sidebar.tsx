@@ -11,7 +11,8 @@ import {
   Link2,
   History,
   Database,
-  Lock
+  Lock,
+  Terminal
 } from 'lucide-react';
 import { ModuleId } from '../types';
 
@@ -49,6 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   ] as const;
 
   const bottomTools = [
+    { id: 'console', icon: <Terminal size={18} />, label: '控制台', isDrawer: true },
     { id: 'context', icon: <Link2 size={18} />, label: '关联上下文', isDrawer: true },
     { id: 'elements', icon: <Blocks size={18} />, label: '元素管理', isTab: true },
   ] as const;
@@ -113,7 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="mt-auto overflow-hidden">
               {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>系统辅助</div>}
               {renderNavItems(bottomTools, 
-                (id) => (id === 'context' ? activeDrawerModule === 'context' : false), 
+                (id) => (id === 'console' || id === 'context' ? activeDrawerModule === id : false), 
                 (id) => {
                   if (id === 'elements') onModuleChange('elements');
                   else onDrawerChange(id as ModuleId);

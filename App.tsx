@@ -123,7 +123,6 @@ const App: React.FC = () => {
       openTab({ id: 'elements-view', name: '元素管理', type: 'folder' });
     } else {
       setActiveModule(id as ModuleId);
-      // 如果目录栏被收起了，点击侧边栏功能项时自动展开
       if (isExplorerHidden) setIsExplorerHidden(false);
     }
   };
@@ -217,6 +216,8 @@ const App: React.FC = () => {
             onModeToggle={(mode) => {
               setInterfaceMode(mode);
               setActiveModule(mode === 'dev' ? 'resources' : 'finance_center');
+              // 自动隐藏元素上下文和控制台抽屉
+              setActiveDrawerModule(null);
               if (isExplorerHidden) setIsExplorerHidden(false);
             }}
           />
@@ -229,7 +230,8 @@ const App: React.FC = () => {
                 onSelectResource={(item) => openTab(item)}
                 isUserMode={interfaceMode === 'user'} 
                 activeTab={activeTab}
-                showContext={activeDrawerModule === 'context'}
+                showContext={activeDrawerModule !== null}
+                activeDrawerType={activeDrawerModule}
                 onCloseContext={() => setActiveDrawerModule(null)}
                 onToggleCollapse={() => setIsExplorerHidden(true)}
               />

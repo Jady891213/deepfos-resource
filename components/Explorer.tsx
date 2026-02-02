@@ -32,7 +32,8 @@ import {
   PanelLeftClose,
   FileJson,
   Lock,
-  PieChart
+  PieChart,
+  Terminal
 } from 'lucide-react';
 import { ModuleId, ResourceItem, Tab, ResourceType } from '../types';
 
@@ -42,6 +43,7 @@ interface ExplorerProps {
   isUserMode?: boolean;
   activeTab?: Tab;
   showContext?: boolean;
+  activeDrawerType?: ModuleId | null;
   onCloseContext?: () => void;
   onToggleCollapse?: () => void;
 }
@@ -111,6 +113,7 @@ const CONSOLE_ITEMS = [
   { id: 'console-deepmodel', name: 'DeepModel控制台', icon: <Database size={14} className="text-blue-500" /> },
   { id: 'console-datastream', name: '数据流监控', icon: <Zap size={14} className="text-amber-500" /> },
   { id: 'console-workflow-todo', name: '工作流待办', icon: <ListTodo size={14} className="text-emerald-500" /> },
+  { id: 'console-workflow-monitor', name: '工作流监控', icon: <Activity size={14} className="text-purple-500" /> },
 ];
 
 const RECENT_ITEMS: ResourceItem[] = [
@@ -140,6 +143,7 @@ const Explorer: React.FC<ExplorerProps> = ({
   isUserMode, 
   activeTab,
   showContext = true,
+  activeDrawerType,
   onCloseContext,
   onToggleCollapse
 }) => {
@@ -159,13 +163,21 @@ const Explorer: React.FC<ExplorerProps> = ({
   });
   const [groupsExpanded, setGroupsExpanded] = useState<Record<string, boolean>>({
     recent: true,
-    fav: true,
-    console: true
+    fav: true
   });
   const [showCode, setShowCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [contextHeight, setContextHeight] = useState(320);
   const [isResizingContext, setIsResizingContext] = useState(false);
+
+  // 新增：锁定当前显示的内容类型，防止收起时闪烁切换
+  const [lockedDrawerType, setLockedDrawerType] = useState<ModuleId | null>(activeDrawerType || null);
+
+  useEffect(() => {
+    if (activeDrawerType) {
+      setLockedDrawerType(activeDrawerType);
+    }
+  }, [activeDrawerType]);
   
   const moduleMenuRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
@@ -203,7 +215,6 @@ const Explorer: React.FC<ExplorerProps> = ({
   const toggleGroup = (id: string) => setGroupsExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
   const currentTree = useMemo(() => {
-    // In user mode, we directly use activeModule to determine the tree content
     const data = isUserMode ? (MODULE_DATA[activeModule] || []) : (MODULE_DATA[selectedModule] || MODULE_DATA['all'] || []);
     if (!searchQuery) return data;
     const lowerQuery = searchQuery.toLowerCase();
@@ -267,36 +278,6 @@ const Explorer: React.FC<ExplorerProps> = ({
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="p-2 bg-white space-y-3">
-          {/* 控制台分组 - 仅在非收藏模块显示，并支持折叠 */}
-          {activeModule !== 'recent_fav' && !isUserMode && (
-            <div className="px-1.5 pt-1">
-              <button 
-                onClick={() => toggleGroup('console')}
-                className="w-full flex items-center justify-between p-1.5 mb-1 text-slate-400 bg-slate-50/50 rounded hover:bg-slate-100/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest">控制台</span>
-                </div>
-                {groupsExpanded.console ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-              </button>
-              
-              {groupsExpanded.console && (
-                <div className="grid grid-cols-1 gap-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                  {CONSOLE_ITEMS.map(item => (
-                    <button 
-                      key={item.id} 
-                      onClick={() => onSelectResource({ id: item.id, name: item.name, type: 'page' })}
-                      className="flex items-center gap-2.5 p-1.5 rounded-lg text-[12px] text-slate-600 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-left"
-                    >
-                      <span className="shrink-0">{item.icon}</span>
-                      <span className={`truncate ${activeTab?.id === item.id ? 'font-bold text-blue-600' : ''}`}>{item.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
             <input 
@@ -474,14 +455,32 @@ const Explorer: React.FC<ExplorerProps> = ({
 
         <div className="h-9 flex items-center px-3 justify-between border-b border-slate-200 bg-white">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Compass size={12} className="text-blue-600" /> 元素上下文
+            {lockedDrawerType === 'console' ? (
+              <><Terminal size={12} className="text-blue-600" /> 控制台</>
+            ) : (
+              <><Compass size={12} className="text-blue-600" /> 元素上下文</>
+            )}
           </span>
           <button onClick={onCloseContext} className="p-1 hover:bg-slate-100 rounded text-slate-400 transition-colors">
             <ChevronDown size={14} />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-3 no-scrollbar space-y-4">
-          {activeTab ? (
+          {lockedDrawerType === 'console' ? (
+            <div className="grid grid-cols-1 gap-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+              {CONSOLE_ITEMS.map(item => (
+                <button 
+                  key={item.id} 
+                  onClick={() => onSelectResource({ id: item.id, name: item.name, type: 'page' })}
+                  className="flex items-center gap-3 p-2 rounded-lg text-[12px] text-slate-600 bg-white border border-slate-100 hover:border-blue-300 hover:bg-blue-50/30 hover:text-blue-600 transition-all text-left shadow-sm group"
+                >
+                  <span className="shrink-0 transition-transform group-hover:scale-110">{item.icon}</span>
+                  <span className="truncate flex-1 font-medium">{item.name}</span>
+                  <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 text-slate-300" />
+                </button>
+              ))}
+            </div>
+          ) : activeTab ? (
             <>
               <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm space-y-1.5">
                 <div className="flex items-center gap-2 text-[12px] font-bold text-slate-800">{activeTab.title}</div>

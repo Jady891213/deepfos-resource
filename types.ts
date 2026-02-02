@@ -47,7 +47,8 @@ export type ModuleId =
   | 'finance_center'
   | 'finance_master_data'
   | 'closing_management'
-  | 'context'   
+  | 'context'
+  | 'console'
   | 'terminal';
 
 export interface NavItem {
