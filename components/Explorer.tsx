@@ -353,14 +353,6 @@ const Explorer: React.FC<ExplorerProps> = ({
                 <div className="flex items-center gap-2 text-[12px] font-bold text-slate-800">{activeTab.title}</div>
                 <div className="text-[10px] text-slate-400 font-mono">{activeTab.code}</div>
               </div>
-              
-              <section className="space-y-1.5">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={10} className="text-blue-600" /> 权限信息</h4>
-                <div className="bg-white/50 border border-slate-100 rounded-lg p-2 text-[11px] space-y-1">
-                  <div className="flex justify-between"><span className="text-slate-500">查看权限:</span><span className="text-slate-700">liuqing, admin</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">管理权限:</span><span className="text-blue-600 font-bold">财务管理员组</span></div>
-                </div>
-              </section>
 
               {/* 关联元素部分 */}
               <section className="space-y-1.5">
@@ -405,7 +397,13 @@ const Explorer: React.FC<ExplorerProps> = ({
                 </div>
               </section>
 
-              
+              <section className="space-y-1.5">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={10} className="text-blue-600" /> 权限信息</h4>
+                <div className="bg-white/50 border border-slate-100 rounded-lg p-2 text-[11px] space-y-1">
+                  <div className="flex justify-between"><span className="text-slate-500">查看权限:</span><span className="text-slate-700">liuqing, admin</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">管理权限:</span><span className="text-blue-600 font-bold">财务管理员组</span></div>
+                </div>
+              </section>
             </>
           ) : (
             <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale p-4">

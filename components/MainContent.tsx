@@ -23,7 +23,8 @@ import {
   ExternalLink,
   Code2,
   PackageOpen,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import { ResourceItem, ViewMode, Tab } from '../types';
 
@@ -58,6 +59,7 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<string>('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const historyRef = useRef<HTMLDivElement>(null);
 
@@ -75,6 +77,14 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
     setActiveFilters(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
   };
 
+  const handleApplyFilters = () => {
+    setIsRefreshing(true);
+    // 模拟刷新效果，不关闭筛选器面板
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 600);
+  };
+
   if (!activeTab) return (
     <div className="flex-1 flex flex-col items-center justify-center h-full bg-slate-50 p-12 text-center">
       <div className="w-24 h-24 bg-slate-200/50 text-slate-400 rounded-full flex items-center justify-center mb-6 border-4 border-white shadow-sm">
@@ -87,7 +97,7 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
   const isPlaceholderTab = activeTab.id !== 'elements-view' && !activeTab.id.startsWith('module-') && activeTab.id !== 'default-home';
   if (isPlaceholderTab) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 p-12 text-center">
+      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 p-12 text-center h-full">
         <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-blue-500/10"><Code2 size={40} /></div>
         <h2 className="text-2xl font-black text-slate-800 mb-2">{activeTab.title}</h2>
         <p className="text-slate-400 max-w-sm">正在加载资源编辑器...</p>
@@ -120,12 +130,10 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
           <div className="w-[1px] h-6 bg-slate-200 mx-2"></div>
           
           <div className="flex items-center gap-1">
-            {/* Restored Permissions Icon */}
             <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="权限设置">
               <ShieldCheck size={18} />
             </button>
 
-            {/* History Popup with "View More" */}
             <div className="relative" ref={historyRef}>
               <button onClick={() => setIsHistoryOpen(!isHistoryOpen)} className={`p-2 rounded-lg transition-colors ${isHistoryOpen ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`} title="操作历史">
                 <History size={18} />
@@ -203,13 +211,23 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
             </div>
             <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex gap-2 shrink-0">
               <button onClick={() => { setActiveFilters([]); setTimeRange('all'); }} className="flex-1 py-2 text-[12px] font-bold text-slate-500 hover:text-slate-800 transition-colors">重置</button>
-              <button onClick={() => setIsFilterOpen(false)} className="flex-[2] py-2 bg-blue-600 text-white rounded-lg text-[12px] font-bold shadow-md hover:bg-blue-700 active:scale-[0.98] transition-all">确定</button>
+              <button onClick={handleApplyFilters} className="flex-[2] py-2 bg-blue-600 text-white rounded-lg text-[12px] font-bold shadow-md hover:bg-blue-700 active:scale-[0.98] transition-all">确定</button>
             </div>
           </div>
         </div>
 
         {/* Scrollable Table Area */}
-        <div className="flex-1 h-full overflow-auto p-6 no-scrollbar">
+        <div className="flex-1 h-full overflow-auto p-6 no-scrollbar relative">
+          {/* Refreshing Overlay */}
+          {isRefreshing && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/40 backdrop-blur-[1px] transition-all">
+              <div className="bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center gap-2">
+                <Loader2 className="animate-spin text-blue-600" size={24} />
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">更新列表中...</span>
+              </div>
+            </div>
+          )}
+          
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm min-w-[800px]">
             <table className="w-full text-left border-collapse">
               <thead>
