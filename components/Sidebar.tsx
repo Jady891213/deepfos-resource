@@ -11,7 +11,8 @@ import {
   History,
   Database,
   Lock,
-  Terminal
+  Terminal,
+  Grid2X2
 } from 'lucide-react';
 import { ModuleId } from '../types';
 
@@ -43,15 +44,21 @@ const Sidebar: React.FC<SidebarProps> = ({
   onModeToggle
 }) => {
   
+  // 开发态核心目录（最近、全量）
   const devItems = [
     { id: 'recent_fav', icon: <History size={18} />, label: '最近与收藏' },
     { id: 'resources', icon: <Blocks size={18} />, label: '全量资源' },
   ] as const;
 
-  const bottomTools = [
+  // 快速工具组
+  const quickTools = [
     { id: 'console', icon: <Terminal size={18} />, label: '控制台', isDrawer: true },
     { id: 'context', icon: <Info size={18} />, label: '元素信息', isDrawer: true },
-    { id: 'elements', icon: <Blocks size={18} />, label: '元素管理', isTab: true },
+  ] as const;
+
+  // 底部辅助工具（元素管理换用 Grid2X2 图标，更贴合图片形状且区分于 Blocks）
+  const bottomTools = [
+    { id: 'elements', icon: <Grid2X2 size={18} />, label: '元素管理', isTab: true },
   ] as const;
 
   const userItems = [
@@ -106,19 +113,29 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 flex flex-col py-2 overflow-y-auto no-scrollbar gap-5">
         {interfaceMode === 'dev' ? (
           <>
+            {/* 工作台区（置顶） */}
             <div className="overflow-hidden">
               {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>工作台</div>}
               {renderNavItems(devItems, (id) => activeModule === id, onModuleChange)}
             </div>
 
+            {/* 分隔符 */}
+            <div className="mx-3 h-[1px] bg-slate-100" />
+
+            {/* 快速工具区（置于工作台下方） */}
+            <div className="overflow-hidden">
+              {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>快速工具</div>}
+              {renderNavItems(quickTools, 
+                (id) => activeDrawerModule === id, 
+                (id) => onDrawerChange(id as ModuleId)
+              )}
+            </div>
+
             <div className="mt-auto overflow-hidden">
               {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>系统辅助</div>}
               {renderNavItems(bottomTools, 
-                (id) => (id === 'console' || id === 'context' ? activeDrawerModule === id : false), 
-                (id) => {
-                  if (id === 'elements') onModuleChange('elements');
-                  else onDrawerChange(id as ModuleId);
-                }
+                (id) => activeModule === id, 
+                (id) => onModuleChange(id)
               )}
             </div>
           </>
