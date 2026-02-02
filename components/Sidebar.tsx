@@ -7,8 +7,7 @@ import {
   Hammer,
   UserCircle,
   MonitorCheck,
-  Compass,
-  Link2,
+  Info,
   History,
   Database,
   Lock,
@@ -46,12 +45,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   const devItems = [
     { id: 'recent_fav', icon: <History size={18} />, label: '最近与收藏' },
-    { id: 'resources', icon: <Compass size={18} />, label: '全量资源' },
+    { id: 'resources', icon: <Blocks size={18} />, label: '全量资源' },
   ] as const;
 
   const bottomTools = [
     { id: 'console', icon: <Terminal size={18} />, label: '控制台', isDrawer: true },
-    { id: 'context', icon: <Link2 size={18} />, label: '关联上下文', isDrawer: true },
+    { id: 'context', icon: <Info size={18} />, label: '元素信息', isDrawer: true },
     { id: 'elements', icon: <Blocks size={18} />, label: '元素管理', isTab: true },
   ] as const;
 

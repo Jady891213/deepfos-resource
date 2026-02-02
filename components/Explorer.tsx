@@ -33,7 +33,8 @@ import {
   FileJson,
   Lock,
   PieChart,
-  Terminal
+  Terminal,
+  Info
 } from 'lucide-react';
 import { ModuleId, ResourceItem, Tab, ResourceType } from '../types';
 
@@ -170,7 +171,7 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [contextHeight, setContextHeight] = useState(320);
   const [isResizingContext, setIsResizingContext] = useState(false);
 
-  // 新增：锁定当前显示的内容类型，防止收起时闪烁切换
+  // 锁定当前显示的内容类型，防止收起时闪烁切换
   const [lockedDrawerType, setLockedDrawerType] = useState<ModuleId | null>(activeDrawerType || null);
 
   useEffect(() => {
@@ -458,7 +459,7 @@ const Explorer: React.FC<ExplorerProps> = ({
             {lockedDrawerType === 'console' ? (
               <><Terminal size={12} className="text-blue-600" /> 控制台</>
             ) : (
-              <><Compass size={12} className="text-blue-600" /> 元素上下文</>
+              <><Info size={12} className="text-blue-600" /> 元素信息</>
             )}
           </span>
           <button onClick={onCloseContext} className="p-1 hover:bg-slate-100 rounded text-slate-400 transition-colors">
@@ -546,7 +547,7 @@ const Explorer: React.FC<ExplorerProps> = ({
             </>
           ) : (
             <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale p-4">
-              <Compass size={32} className="mb-2" />
+              <Info size={32} className="mb-2" />
               <p className="text-[10px] font-bold uppercase tracking-widest">未选择元素</p>
             </div>
           )}
