@@ -41,10 +41,13 @@ export enum ViewMode {
 }
 
 export type ModuleId = 
-  | 'recent_fav' // Recent and Favorites module
-  | 'resources' // Unified Resource Management
+  | 'recent_fav' 
+  | 'resources' 
   | 'finance' 
-  | 'context'   // Active Tab Context (Relations)
+  | 'finance_center'
+  | 'finance_master_data'
+  | 'closing_management'
+  | 'context'   
   | 'terminal';
 
 export interface NavItem {

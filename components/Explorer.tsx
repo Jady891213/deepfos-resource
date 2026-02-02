@@ -28,7 +28,11 @@ import {
   Clock,
   Activity,
   ListTodo,
-  Monitor
+  Monitor,
+  PanelLeftClose,
+  FileJson,
+  Lock,
+  PieChart
 } from 'lucide-react';
 import { ModuleId, ResourceItem, Tab, ResourceType } from '../types';
 
@@ -39,6 +43,7 @@ interface ExplorerProps {
   activeTab?: Tab;
   showContext?: boolean;
   onCloseContext?: () => void;
+  onToggleCollapse?: () => void;
 }
 
 const MODULE_DATA: Record<string, ResourceItem[]> = {
@@ -55,6 +60,31 @@ const MODULE_DATA: Record<string, ResourceItem[]> = {
     { id: 'dir_model_1', name: '财务模型', code: 'DIR_FIN_MODEL', type: 'folder', version: '', createdBy: '', updatedAt: '', children: [
       { id: 'res_m_1', name: '对账核销核心模型', code: 'MODEL_RECON_CORE', type: 'model', version: '3.0', createdBy: 'liuqing', updatedAt: '2025-05-14' },
     ]},
+  ],
+  'finance_center': [
+    { id: 'root_statement', name: '财务报表', code: 'ROOT_FIN_STMT', type: 'folder', version: '', createdBy: '', updatedAt: '', children: [
+      { id: 'res_stmt_1', name: '合并资产负债表', code: 'CONSOL_BS', type: 'spreadsheet', version: '1.0', createdBy: 'liuqing', updatedAt: '2025-05-15' },
+      { id: 'res_stmt_2', name: '季度利润明细表', code: 'QUARTER_PL', type: 'spreadsheet', version: '1.2', createdBy: 'admin', updatedAt: '2025-05-16' },
+    ]},
+    { id: 'root_ledger', name: '总账查询', code: 'ROOT_LEDGER', type: 'folder', version: '', createdBy: '', updatedAt: '', children: [
+      { id: 'res_ledger_1', name: '科目余额表查询', code: 'ACC_BAL_QUERY', type: 'ux', version: '2.0', createdBy: 'liuqing', updatedAt: '2025-05-17' },
+    ]}
+  ],
+  'finance_master_data': [
+    { id: 'root_entity', name: '组织机构', code: 'ROOT_ENTITY', type: 'folder', version: '', createdBy: '', updatedAt: '', children: [
+      { id: 'res_entity_1', name: '公司实体维护', code: 'ENTITY_MAINT', type: 'ux', version: '1.0', createdBy: 'liuqing', updatedAt: '2025-05-18' },
+    ]},
+    { id: 'root_account', name: '会计科目', code: 'ROOT_ACCOUNT', type: 'folder', version: '', createdBy: '', updatedAt: '', children: [
+      { id: 'res_acc_1', name: '科目体系定义', code: 'CHART_OF_ACCOUNTS', type: 'model', version: '3.1', createdBy: 'admin', updatedAt: '2025-05-19' },
+    ]}
+  ],
+  'closing_management': [
+    { id: 'root_period', name: '期间管理', code: 'ROOT_PERIOD', type: 'folder', version: '', createdBy: '', updatedAt: '', children: [
+      { id: 'res_period_1', name: '会计期间状态控制', code: 'PERIOD_CTRL', type: 'ux', version: '1.0', createdBy: 'liuqing', updatedAt: '2025-05-20' },
+    ]},
+    { id: 'root_check', name: '结账检查', code: 'ROOT_CHECK', type: 'folder', version: '', createdBy: '', updatedAt: '', children: [
+      { id: 'res_check_1', name: '试算平衡校验', code: 'TRIAL_BALANCE_CHECK', type: 'logic', version: '2.0', createdBy: 'liuqing', updatedAt: '2025-05-21' },
+    ]}
   ],
   'all': [
     { id: 'root_ux', name: '01 页面展现', code: 'ROOT_UX', type: 'folder', version: '', createdBy: '', updatedAt: '', children: [
@@ -75,14 +105,12 @@ const MODULE_OPTIONS = [
   { id: 'module-ux', label: '页面展现', icon: <Layout size={14} /> },
   { id: 'module-model', label: '数据模型', icon: <Database size={14} /> },
   { id: 'module-logic', label: '流程逻辑', icon: <Workflow size={14} /> },
-  { id: 'module-integration', label: '数据集成', icon: <Zap size={14} /> },
 ];
 
 const CONSOLE_ITEMS = [
   { id: 'console-deepmodel', name: 'DeepModel控制台', icon: <Database size={14} className="text-blue-500" /> },
   { id: 'console-datastream', name: '数据流监控', icon: <Zap size={14} className="text-amber-500" /> },
   { id: 'console-workflow-todo', name: '工作流待办', icon: <ListTodo size={14} className="text-emerald-500" /> },
-  { id: 'console-workflow-monitor', name: '工作流监控', icon: <Activity size={14} className="text-purple-500" /> },
 ];
 
 const RECENT_ITEMS: ResourceItem[] = [
@@ -112,17 +140,23 @@ const Explorer: React.FC<ExplorerProps> = ({
   isUserMode, 
   activeTab,
   showContext = true,
-  onCloseContext
+  onCloseContext,
+  onToggleCollapse
 }) => {
-  const [selectedModule, setSelectedModule] = useState('all');
+  const [selectedModule, setSelectedModule] = useState(isUserMode ? activeModule : 'all');
   const [isModuleMenuOpen, setIsModuleMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ 
     'root_ux': true,
     'root_model': true,
-    'root_logic': true
+    'root_logic': true,
+    'root_statement': true,
+    'root_ledger': true,
+    'root_entity': true,
+    'root_account': true,
+    'root_period': true,
+    'root_check': true,
   });
-  // 分组展开状态，默认全部展开
   const [groupsExpanded, setGroupsExpanded] = useState<Record<string, boolean>>({
     recent: true,
     fav: true,
@@ -169,7 +203,8 @@ const Explorer: React.FC<ExplorerProps> = ({
   const toggleGroup = (id: string) => setGroupsExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
   const currentTree = useMemo(() => {
-    const data = MODULE_DATA[selectedModule] || MODULE_DATA['all'] || [];
+    // In user mode, we directly use activeModule to determine the tree content
+    const data = isUserMode ? (MODULE_DATA[activeModule] || []) : (MODULE_DATA[selectedModule] || MODULE_DATA['all'] || []);
     if (!searchQuery) return data;
     const lowerQuery = searchQuery.toLowerCase();
     return data.map(dir => ({
@@ -178,7 +213,7 @@ const Explorer: React.FC<ExplorerProps> = ({
         item.name.toLowerCase().includes(lowerQuery) || item.code.toLowerCase().includes(lowerQuery)
       )
     })).filter(dir => (dir.children && dir.children.length > 0) || dir.name.toLowerCase().includes(lowerQuery));
-  }, [selectedModule, searchQuery]);
+  }, [selectedModule, activeModule, searchQuery, isUserMode]);
 
   const filteredRecent = useMemo(() => {
     if (!searchQuery) return RECENT_ITEMS;
@@ -192,30 +227,48 @@ const Explorer: React.FC<ExplorerProps> = ({
     return FAVORITE_ITEMS.filter(item => item.name.toLowerCase().includes(q) || item.code.toLowerCase().includes(q));
   }, [searchQuery]);
 
-  const currentModule = useMemo(() => 
-    MODULE_OPTIONS.find(o => o.id === selectedModule) || MODULE_OPTIONS[0], 
-  [selectedModule]);
+  const currentModuleLabel = useMemo(() => {
+    if (isUserMode) {
+      switch(activeModule) {
+        case 'finance_center': return '财务中心';
+        case 'finance_master_data': return '财务主数据';
+        case 'closing_management': return '关账管理';
+        default: return '应用目录';
+      }
+    }
+    return (MODULE_OPTIONS.find(o => o.id === selectedModule) || MODULE_OPTIONS[0]).label;
+  }, [selectedModule, isUserMode, activeModule]);
 
   return (
     <div className="flex flex-col h-full bg-white select-none relative">
       <div className="h-14 flex items-center px-4 justify-between border-b border-slate-100 bg-white shrink-0">
         <div className="flex items-center gap-2">
           <span className="font-bold text-slate-800 tracking-tight text-[13px] uppercase">
-            {activeModule === 'recent_fav' ? '收藏' : '资源管理'}
+            {activeModule === 'recent_fav' ? '收藏' : (isUserMode ? currentModuleLabel : '资源管理')}
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={() => setShowCode(!showCode)} className={`p-1.5 rounded transition-colors ${showCode ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}>
+          <button 
+            onClick={() => setShowCode(!showCode)} 
+            className={`p-1.5 rounded transition-colors ${showCode ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}
+            title={showCode ? "切换至名称显示" : "切换至编码显示"}
+          >
             {showCode ? <Code2 size={14} /> : <Eye size={14} />}
           </button>
-          <button className="p-1.5 text-slate-400 hover:bg-slate-50 rounded"><X size={14} /></button>
+          <button 
+            onClick={onToggleCollapse}
+            className="p-1.5 text-slate-400 hover:bg-slate-50 rounded transition-colors"
+            title="收起目录栏"
+          >
+            <PanelLeftClose size={14} />
+          </button>
         </div>
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="p-2 bg-white space-y-3">
           {/* 控制台分组 - 仅在非收藏模块显示，并支持折叠 */}
-          {activeModule !== 'recent_fav' && (
+          {activeModule !== 'recent_fav' && !isUserMode && (
             <div className="px-1.5 pt-1">
               <button 
                 onClick={() => toggleGroup('console')}
@@ -255,15 +308,15 @@ const Explorer: React.FC<ExplorerProps> = ({
             />
           </div>
 
-          {activeModule !== 'recent_fav' && (
+          {activeModule !== 'recent_fav' && !isUserMode && (
             <div className="flex items-center justify-between gap-1.5">
               <div className="relative flex-1" ref={moduleMenuRef}>
                 <button 
                   onClick={() => setIsModuleMenuOpen(!isModuleMenuOpen)}
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-slate-200 bg-white hover:border-blue-400 transition-all text-slate-700 shadow-sm"
                 >
-                  <span className="text-blue-600">{currentModule.icon}</span>
-                  <span className="text-[12px] font-medium flex-1 text-left">{currentModule.label}</span>
+                  <span className="text-blue-600">{(MODULE_OPTIONS.find(o => o.id === selectedModule) || MODULE_OPTIONS[0]).icon}</span>
+                  <span className="text-[12px] font-medium flex-1 text-left">{currentModuleLabel}</span>
                   <ChevronDown size={12} className="text-slate-400" />
                 </button>
                 
@@ -388,13 +441,15 @@ const Explorer: React.FC<ExplorerProps> = ({
                         <span className={`text-[12px] truncate flex-1 transition-colors ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
                           {showCode ? item.code : item.name}
                         </span>
-                        <button 
-                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-amber-400 transition-all"
-                          onClick={(e) => { e.stopPropagation(); /* 触发收藏逻辑 */ }}
-                          title="收藏"
-                        >
-                          <Star size={12} />
-                        </button>
+                        {!isUserMode && (
+                          <button 
+                            className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-amber-400 transition-all"
+                            onClick={(e) => { e.stopPropagation(); /* 触发收藏逻辑 */ }}
+                            title="收藏"
+                          >
+                            <Star size={12} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -433,7 +488,6 @@ const Explorer: React.FC<ExplorerProps> = ({
                 <div className="text-[10px] text-slate-400 font-mono">{activeTab.code}</div>
               </div>
 
-              {/* 权限信息 */}
               <section className="space-y-1.5">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={10} className="text-blue-600" /> 权限信息</h4>
                 <div className="bg-white/50 border border-slate-100 rounded-lg p-2 text-[11px] space-y-1">

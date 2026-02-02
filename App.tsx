@@ -36,6 +36,7 @@ const App: React.FC = () => {
   const [interfaceMode, setInterfaceMode] = useState<'dev' | 'user'>('dev');
   
   const [isNavHidden, setIsNavHidden] = useState(false);
+  const [isExplorerHidden, setIsExplorerHidden] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(64);
   
   const [isResizing, setIsResizing] = useState(false);
@@ -122,10 +123,12 @@ const App: React.FC = () => {
       openTab({ id: 'elements-view', name: '元素管理', type: 'folder' });
     } else {
       setActiveModule(id as ModuleId);
+      // 如果目录栏被收起了，点击侧边栏功能项时自动展开
+      if (isExplorerHidden) setIsExplorerHidden(false);
     }
   };
 
-  const explorerWidth = 240;
+  const explorerWidth = isExplorerHidden ? 0 : 240;
   const navContainerWidth = sidebarWidth + explorerWidth;
 
   return (
@@ -213,11 +216,12 @@ const App: React.FC = () => {
             interfaceMode={interfaceMode}
             onModeToggle={(mode) => {
               setInterfaceMode(mode);
-              setActiveModule(mode === 'dev' ? 'resources' : 'finance');
+              setActiveModule(mode === 'dev' ? 'resources' : 'finance_center');
+              if (isExplorerHidden) setIsExplorerHidden(false);
             }}
           />
 
-          <div className="flex-1 flex flex-col border-l border-slate-100 bg-white relative overflow-hidden">
+          <div className={`flex-1 flex flex-col border-l border-slate-100 bg-white relative overflow-hidden transition-all duration-300 ${isExplorerHidden ? 'opacity-0' : 'opacity-100'}`}>
             <div className="flex-1 flex flex-col min-h-0">
               <Explorer 
                 key={`${activeModule}-${interfaceMode}`} 
@@ -227,12 +231,22 @@ const App: React.FC = () => {
                 activeTab={activeTab}
                 showContext={activeDrawerModule === 'context'}
                 onCloseContext={() => setActiveDrawerModule(null)}
+                onToggleCollapse={() => setIsExplorerHidden(true)}
               />
             </div>
           </div>
         </div>
 
         <main className="flex-1 flex flex-row overflow-hidden relative bg-[#f8fafc] z-10">
+          {isExplorerHidden && !isNavHidden && (
+            <button 
+              onClick={() => setIsExplorerHidden(false)}
+              className="absolute left-0 top-1/2 -translate-y-1/2 p-1.5 bg-white border border-slate-200 border-l-0 rounded-r-lg text-slate-400 hover:text-blue-600 shadow-md z-50 animate-in slide-in-from-left duration-200"
+              title="展开目录栏"
+            >
+              <PanelLeft size={16} />
+            </button>
+          )}
           <div className="flex-1 overflow-hidden">
             <MainContent 
               data={INITIAL_DATA} 

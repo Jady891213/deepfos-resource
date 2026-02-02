@@ -9,7 +9,9 @@ import {
   MonitorCheck,
   Compass,
   Link2,
-  History
+  History,
+  Database,
+  Lock
 } from 'lucide-react';
 import { ModuleId } from '../types';
 
@@ -52,7 +54,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   ] as const;
 
   const userItems = [
-    { id: 'finance', icon: <MonitorCheck size={18} />, label: '财务中心' },
+    { id: 'finance_center', icon: <MonitorCheck size={18} />, label: '财务中心' },
+    { id: 'finance_master_data', icon: <Database size={18} />, label: '财务主数据' },
+    { id: 'closing_management', icon: <Lock size={18} />, label: '关账管理' },
   ] as const;
 
   const renderNavItems = (items: readonly any[], isActive: (id: string) => boolean, clickHandler: (id: string) => void) => (
@@ -119,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </>
         ) : (
           <div className="overflow-hidden">
-            {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>应用中心</div>}
+            {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>业务菜单</div>}
             {renderNavItems(userItems, (id) => activeModule === id, onModuleChange)}
           </div>
         )}
