@@ -11,7 +11,10 @@ import {
   PanelLeftClose,
   PanelLeft,
   ArrowRight,
-  MoreHorizontal
+  MoreHorizontal,
+  ArrowRightCircle,
+  XCircle,
+  MinusCircle
 } from 'lucide-react';
 import { ViewMode, ResourceItem, ModuleId, Tab } from './types';
 import Sidebar from './components/Sidebar';
@@ -144,42 +147,42 @@ const App: React.FC = () => {
     });
   }, [activeTabId]);
 
-  const closeRightAction = useCallback((id: string) => {
+  const closeOtherTabs = (id: string) => {
+    setTabs(prevTabs => prevTabs.filter(t => t.id === id));
+    setActiveTabId(id);
+    setContextMenu(null);
+  };
+
+  const closeRightTabs = (id: string) => {
     setTabs(prevTabs => {
       const index = prevTabs.findIndex(t => t.id === id);
-      const newTabs = prevTabs.slice(0, index + 1);
-      if (activeTabId && !newTabs.find(t => t.id === activeTabId)) {
-        setActiveTabId(id);
-      }
-      return newTabs;
+      return prevTabs.slice(0, index + 1);
     });
-  }, [activeTabId]);
-
-  const closeOthersAction = useCallback((id: string) => {
-    setTabs(prevTabs => {
-      const clickedTab = prevTabs.find(t => t.id === id);
-      const newTabs = clickedTab ? [clickedTab] : prevTabs;
-      setActiveTabId(id);
-      return newTabs;
-    });
-  }, []);
-
-  const handleContextMenu = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      tabId: id
-    });
+    setActiveTabId(id);
+    setContextMenu(null);
   };
 
   const handleSidebarModuleChange = (id: string) => {
     if (id === 'elements') {
       openTab({ id: 'elements-view', name: '元素管理', type: 'folder' });
+      if (isExplorerHidden) setIsExplorerHidden(false);
     } else {
       setActiveModule(id as ModuleId);
       if (isExplorerHidden) setIsExplorerHidden(false);
     }
+  };
+
+  const handleModeToggle = (mode: 'dev' | 'user') => {
+    if (mode === interfaceMode) return;
+    setInterfaceMode(mode);
+    setActiveModule(mode === 'dev' ? 'resources' : 'finance_center');
+    setActiveDrawerModule(null);
+    if (isExplorerHidden) setIsExplorerHidden(false);
+  };
+
+  const handleTabContextMenu = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, tabId: id });
   };
 
   const explorerWidth = isExplorerHidden ? 0 : 240;
@@ -215,7 +218,7 @@ const App: React.FC = () => {
             <div 
               key={tab.id}
               onClick={() => setActiveTabId(tab.id)}
-              onContextMenu={(e) => handleContextMenu(e, tab.id)}
+              onContextMenu={(e) => handleTabContextMenu(e, tab.id)}
               className={`group h-[38px] flex items-center px-4 gap-2 text-[12px] font-medium cursor-pointer transition-all border-t-2 rounded-t-lg shrink-0 select-none ${
                 activeTabId === tab.id 
                   ? 'bg-white border-blue-600 text-blue-700 shadow-[0_-2px_6px_rgba(0,0,0,0.02)]' 
@@ -238,46 +241,11 @@ const App: React.FC = () => {
           <button onClick={() => setIsAIShowing(!isAIShowing)} className={`p-1.5 rounded-lg transition-colors ${isAIShowing ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-100'}`}>
             <Sparkles size={18} />
           </button>
-          <button className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg relative">
-            <Bell size={18} />
-            <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
-          </button>
           <div className="flex items-center gap-2 pl-2 border-l border-slate-100 ml-1">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[12px] font-bold border-2 border-white shadow-sm">LQ</div>
           </div>
         </div>
       </header>
-
-      {/* Tab Context Menu */}
-      {contextMenu && (
-        <div 
-          ref={contextMenuRef}
-          className="fixed bg-white border border-slate-200 rounded-lg shadow-xl py-1 z-[100] min-w-[140px] animate-in fade-in zoom-in duration-100"
-          style={{ top: contextMenu.y, left: contextMenu.x }}
-        >
-          <button 
-            className="w-full flex items-center gap-3 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors"
-            onClick={() => { closeTabAction(contextMenu.tabId); setContextMenu(null); }}
-          >
-            <X size={14} className="text-slate-400" />
-            <span>关闭</span>
-          </button>
-          <button 
-            className="w-full flex items-center gap-3 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors"
-            onClick={() => { closeRightAction(contextMenu.tabId); setContextMenu(null); }}
-          >
-            <ArrowRight size={14} className="text-slate-400" />
-            <span>关闭右侧</span>
-          </button>
-          <button 
-            className="w-full flex items-center gap-3 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors"
-            onClick={() => { closeOthersAction(contextMenu.tabId); setContextMenu(null); }}
-          >
-            <MoreHorizontal size={14} className="text-slate-400" />
-            <span>关闭其他</span>
-          </button>
-        </div>
-      )}
 
       <div className="flex flex-1 overflow-hidden relative">
         <div 
@@ -300,12 +268,7 @@ const App: React.FC = () => {
             onResizeStart={startResizing}
             isResizing={isResizing}
             interfaceMode={interfaceMode}
-            onModeToggle={(mode) => {
-              setInterfaceMode(mode);
-              setActiveModule(mode === 'dev' ? 'resources' : 'finance_center');
-              setActiveDrawerModule(null);
-              if (isExplorerHidden) setIsExplorerHidden(false);
-            }}
+            onModeToggle={handleModeToggle}
           />
 
           <div className={`flex-1 flex flex-col border-l border-slate-100 bg-white relative overflow-hidden transition-all duration-300 ${isExplorerHidden ? 'opacity-0' : 'opacity-100'}`}>
@@ -350,6 +313,33 @@ const App: React.FC = () => {
           )}
         </main>
       </div>
+
+      {contextMenu && (
+        <div 
+          ref={contextMenuRef}
+          className="fixed bg-white border border-slate-100 rounded-lg shadow-2xl z-[100] py-1 min-w-[160px] animate-in fade-in zoom-in duration-100 origin-top-left"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button 
+            onClick={() => { closeTabAction(contextMenu.tabId); setContextMenu(null); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            <X size={14} className="text-slate-400" /> 关闭标签页
+          </button>
+          <button 
+            onClick={() => closeOtherTabs(contextMenu.tabId)}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            <MinusCircle size={14} className="text-slate-400" /> 关闭其他标签页
+          </button>
+          <button 
+            onClick={() => closeRightTabs(contextMenu.tabId)}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            <ArrowRightCircle size={14} className="text-slate-400" /> 关闭右侧标签页
+          </button>
+        </div>
+      )}
     </div>
   );
 };

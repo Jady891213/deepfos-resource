@@ -171,7 +171,6 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [contextHeight, setContextHeight] = useState(320);
   const [isResizingContext, setIsResizingContext] = useState(false);
 
-  // 锁定当前显示的内容类型，防止收起时闪烁切换
   const [lockedDrawerType, setLockedDrawerType] = useState<ModuleId | null>(activeDrawerType || null);
 
   useEffect(() => {
@@ -252,17 +251,17 @@ const Explorer: React.FC<ExplorerProps> = ({
   }, [selectedModule, isUserMode, activeModule]);
 
   return (
-    <div className="flex flex-col h-full bg-white select-none relative">
+    <div className="flex flex-col h-full bg-white select-none relative border-r border-slate-100">
       <div className="h-14 flex items-center px-4 justify-between border-b border-slate-100 bg-white shrink-0">
         <div className="flex items-center gap-2">
           <span className="font-bold text-slate-800 tracking-tight text-[13px] uppercase">
-            {activeModule === 'recent_fav' ? '收藏' : (isUserMode ? currentModuleLabel : '资源管理')}
+            {activeModule === 'recent_fav' ? '最近与收藏' : (isUserMode ? currentModuleLabel : '资源管理')}
           </span>
         </div>
         <div className="flex items-center gap-1">
           <button 
             onClick={() => setShowCode(!showCode)} 
-            className={`p-1.5 rounded transition-colors ${showCode ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}
+            className={`p-1.5 rounded transition-all active:scale-90 ${showCode ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-50'}`}
             title={showCode ? "切换至名称显示" : "切换至编码显示"}
           >
             {showCode ? <Code2 size={14} /> : <Eye size={14} />}
@@ -317,32 +316,9 @@ const Explorer: React.FC<ExplorerProps> = ({
                   </div>
                 )}
               </div>
-
-              <div className="flex items-center gap-1">
-                <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm" title="新建资源">
-                  <Plus size={16} />
-                </button>
-                <div className="relative" ref={moreMenuRef}>
-                  <button 
-                    onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                    className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-400 hover:text-slate-600 transition-all shadow-sm"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
-                  {isMoreMenuOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-100 rounded-lg shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top-right">
-                      <button className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50"><Locate size={14} className="text-slate-400" /> 定位当前元素</button>
-                      <div className="h-[1px] bg-slate-100 my-1 mx-2"></div>
-                      <button onClick={() => setExpanded(prev => {
-                        const next = { ...prev };
-                        currentTree.forEach(d => next[d.id] = true);
-                        return next;
-                      })} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50">展开全部</button>
-                      <button onClick={() => setExpanded({})} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50">收起全部</button>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm" title="新建资源">
+                <Plus size={16} />
+              </button>
             </div>
           )}
         </div>
@@ -367,7 +343,9 @@ const Explorer: React.FC<ExplorerProps> = ({
                     {filteredRecent.length > 0 ? filteredRecent.map(item => (
                       <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer hover:bg-blue-50/50 transition-colors">
                         {getIconForType(item.type)}
-                        <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>{item.name}</span>
+                        <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
+                          {showCode ? item.code : item.name}
+                        </span>
                       </div>
                     )) : <div className="p-3 text-[11px] text-slate-400 text-center italic">无匹配记录</div>}
                   </div>
@@ -391,7 +369,9 @@ const Explorer: React.FC<ExplorerProps> = ({
                     {filteredFav.length > 0 ? filteredFav.map(item => (
                       <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer hover:bg-blue-50/50 transition-colors group">
                         {getIconForType(item.type)}
-                        <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>{item.name}</span>
+                        <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
+                          {showCode ? item.code : item.name}
+                        </span>
                         <button 
                           className="opacity-0 group-hover:opacity-100 p-1 text-amber-400 hover:text-slate-400 transition-all"
                           onClick={(e) => { e.stopPropagation(); /* 触发取消收藏逻辑 */ }}
@@ -423,15 +403,6 @@ const Explorer: React.FC<ExplorerProps> = ({
                         <span className={`text-[12px] truncate flex-1 transition-colors ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
                           {showCode ? item.code : item.name}
                         </span>
-                        {!isUserMode && (
-                          <button 
-                            className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-amber-400 transition-all"
-                            onClick={(e) => { e.stopPropagation(); /* 触发收藏逻辑 */ }}
-                            title="收藏"
-                          >
-                            <Star size={12} />
-                          </button>
-                        )}
                       </div>
                     ))}
                   </div>
