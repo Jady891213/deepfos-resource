@@ -214,6 +214,22 @@ const Explorer: React.FC<ExplorerProps> = ({
   const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   const toggleGroup = (id: string) => setGroupsExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
+  const expandAll = () => {
+    const allIds: Record<string, boolean> = {};
+    Object.keys(MODULE_DATA).forEach(key => {
+      MODULE_DATA[key].forEach(item => {
+        if (item.type === 'folder') allIds[item.id] = true;
+      });
+    });
+    setExpanded(allIds);
+    setIsMoreMenuOpen(false);
+  };
+
+  const collapseAll = () => {
+    setExpanded({});
+    setIsMoreMenuOpen(false);
+  };
+
   const currentTree = useMemo(() => {
     const data = isUserMode ? (MODULE_DATA[activeModule] || []) : (MODULE_DATA[selectedModule] || MODULE_DATA['all'] || []);
     if (!searchQuery) return data;
@@ -290,14 +306,14 @@ const Explorer: React.FC<ExplorerProps> = ({
           </div>
 
           {activeModule !== 'recent_fav' && !isUserMode && (
-            <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center justify-between gap-1">
               <div className="relative flex-1" ref={moduleMenuRef}>
                 <button 
                   onClick={() => setIsModuleMenuOpen(!isModuleMenuOpen)}
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-slate-200 bg-white hover:border-blue-400 transition-all text-slate-700 shadow-sm"
                 >
                   <span className="text-blue-600">{(MODULE_OPTIONS.find(o => o.id === selectedModule) || MODULE_OPTIONS[0]).icon}</span>
-                  <span className="text-[12px] font-medium flex-1 text-left">{currentModuleLabel}</span>
+                  <span className="text-[12px] font-medium flex-1 text-left whitespace-nowrap overflow-hidden truncate">{currentModuleLabel}</span>
                   <ChevronDown size={12} className="text-slate-400" />
                 </button>
                 
@@ -316,9 +332,46 @@ const Explorer: React.FC<ExplorerProps> = ({
                   </div>
                 )}
               </div>
-              <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm" title="新建资源">
-                <Plus size={16} />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm" title="新建资源">
+                  <Plus size={16} />
+                </button>
+                <div className="relative" ref={moreMenuRef}>
+                  <button 
+                    onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                    className={`w-8 h-8 flex items-center justify-center border rounded transition-all shadow-sm ${isMoreMenuOpen ? 'bg-blue-50 border-blue-300 text-blue-600' : 'bg-white border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-300'}`} 
+                    title="更多操作"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                  {isMoreMenuOpen && (
+                    <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-100 rounded-lg shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top-right">
+                      <button 
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                        onClick={() => setIsMoreMenuOpen(false)}
+                      >
+                        <Locate size={14} className="text-slate-400" />
+                        <span>定位当前页</span>
+                      </button>
+                      <div className="h-[1px] bg-slate-100 mx-2 my-1"></div>
+                      <button 
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                        onClick={expandAll}
+                      >
+                        <ChevronDown size={14} className="text-slate-400" />
+                        <span>展开所有</span>
+                      </button>
+                      <button 
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                        onClick={collapseAll}
+                      >
+                        <ChevronRight size={14} className="text-slate-400" />
+                        <span>收起所有</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
