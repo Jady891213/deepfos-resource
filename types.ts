@@ -41,6 +41,7 @@ export enum ViewMode {
 }
 
 export type ModuleId = 
+  | 'recent_fav' // Recent and Favorites module
   | 'resources' // Unified Resource Management
   | 'finance' 
   | 'context'   // Active Tab Context (Relations)

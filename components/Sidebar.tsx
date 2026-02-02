@@ -8,7 +8,8 @@ import {
   UserCircle,
   MonitorCheck,
   Compass,
-  Link2
+  Link2,
+  History
 } from 'lucide-react';
 import { ModuleId } from '../types';
 
@@ -40,8 +41,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onModeToggle
 }) => {
   
-  // 恢复为单一的“全量资源”入口
   const devItems = [
+    { id: 'recent_fav', icon: <History size={18} />, label: '最近与收藏' },
     { id: 'resources', icon: <Compass size={18} />, label: '全量资源' },
   ] as const;
 

@@ -9,36 +9,32 @@ import {
   Database,
   Workflow,
   Cpu,
-  Share2,
   Code2,
   Eye,
   Plus,
   ArrowUpRight,
   ArrowDownLeft,
-  Clock,
-  Trash2,
-  Edit2,
   X,
   Compass,
   ShieldCheck,
-  User,
-  Users,
   ExternalLink,
   History,
   Star,
   Layout,
   Zap,
-  Terminal,
   Grid3X3,
   MoreVertical,
   Locate,
-  Filter
+  Clock,
+  Activity,
+  ListTodo,
+  Monitor
 } from 'lucide-react';
 import { ModuleId, ResourceItem, Tab, ResourceType } from '../types';
 
 interface ExplorerProps {
   activeModule: ModuleId;
-  onSelectResource: (item: ResourceItem) => void;
+  onSelectResource: (item: any) => void;
   isUserMode?: boolean;
   activeTab?: Tab;
   showContext?: boolean;
@@ -82,6 +78,13 @@ const MODULE_OPTIONS = [
   { id: 'module-integration', label: '数据集成', icon: <Zap size={14} /> },
 ];
 
+const CONSOLE_ITEMS = [
+  { id: 'console-deepmodel', name: 'DeepModel控制台', icon: <Database size={14} className="text-blue-500" /> },
+  { id: 'console-datastream', name: '数据流监控', icon: <Zap size={14} className="text-amber-500" /> },
+  { id: 'console-workflow-todo', name: '工作流待办', icon: <ListTodo size={14} className="text-emerald-500" /> },
+  { id: 'console-workflow-monitor', name: '工作流监控', icon: <Activity size={14} className="text-purple-500" /> },
+];
+
 const RECENT_ITEMS: ResourceItem[] = [
   { id: 'res_m_1', name: '对账核销核心模型', code: 'MODEL_RECON_CORE', type: 'model', version: '3.0', createdBy: 'liuqing', updatedAt: '2025-05-14' },
   { id: 'res_ux_3', name: '财务看板-主视图', code: 'FIN_DASHBOARD', type: 'ux', version: '1.0', createdBy: 'liuqing', updatedAt: '2025-05-12' },
@@ -104,6 +107,7 @@ const getIconForType = (type: ResourceType) => {
 };
 
 const Explorer: React.FC<ExplorerProps> = ({ 
+  activeModule,
   onSelectResource, 
   isUserMode, 
   activeTab,
@@ -113,12 +117,16 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [selectedModule, setSelectedModule] = useState('all');
   const [isModuleMenuOpen, setIsModuleMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const [quickAccessMode, setQuickAccessMode] = useState<'recent' | 'fav'>('recent');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ 
-    'quick-access': true,
     'root_ux': true,
     'root_model': true,
     'root_logic': true
+  });
+  // 分组展开状态，默认全部展开
+  const [groupsExpanded, setGroupsExpanded] = useState<Record<string, boolean>>({
+    recent: true,
+    fav: true,
+    console: true
   });
   const [showCode, setShowCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,21 +145,17 @@ const Explorer: React.FC<ExplorerProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 修复高度调整逻辑
   useEffect(() => {
     if (isResizingContext) {
       const onMouseMove = (e: MouseEvent) => {
-        // 计算新的高度：窗口底部 y 坐标 - 鼠标 y 坐标
         const newHeight = window.innerHeight - e.clientY;
         setContextHeight(Math.max(100, Math.min(800, newHeight)));
       };
       const onMouseUp = () => setIsResizingContext(false);
-      
       window.addEventListener('mousemove', onMouseMove);
       window.addEventListener('mouseup', onMouseUp);
       document.body.style.cursor = 'row-resize';
       document.body.style.userSelect = 'none';
-      
       return () => {
         window.removeEventListener('mousemove', onMouseMove);
         window.removeEventListener('mouseup', onMouseUp);
@@ -162,6 +166,7 @@ const Explorer: React.FC<ExplorerProps> = ({
   }, [isResizingContext]);
 
   const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleGroup = (id: string) => setGroupsExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
   const currentTree = useMemo(() => {
     const data = MODULE_DATA[selectedModule] || MODULE_DATA['all'] || [];
@@ -175,22 +180,29 @@ const Explorer: React.FC<ExplorerProps> = ({
     })).filter(dir => (dir.children && dir.children.length > 0) || dir.name.toLowerCase().includes(lowerQuery));
   }, [selectedModule, searchQuery]);
 
+  const filteredRecent = useMemo(() => {
+    if (!searchQuery) return RECENT_ITEMS;
+    const q = searchQuery.toLowerCase();
+    return RECENT_ITEMS.filter(item => item.name.toLowerCase().includes(q) || item.code.toLowerCase().includes(q));
+  }, [searchQuery]);
+
+  const filteredFav = useMemo(() => {
+    if (!searchQuery) return FAVORITE_ITEMS;
+    const q = searchQuery.toLowerCase();
+    return FAVORITE_ITEMS.filter(item => item.name.toLowerCase().includes(q) || item.code.toLowerCase().includes(q));
+  }, [searchQuery]);
+
   const currentModule = useMemo(() => 
     MODULE_OPTIONS.find(o => o.id === selectedModule) || MODULE_OPTIONS[0], 
   [selectedModule]);
 
   return (
     <div className="flex flex-col h-full bg-white select-none relative">
-      {/* Explorer Header */}
       <div className="h-14 flex items-center px-4 justify-between border-b border-slate-100 bg-white shrink-0">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-slate-800 tracking-tight text-[13px] uppercase">资源管理</span>
-          <button 
-            onClick={() => setQuickAccessMode(quickAccessMode === 'recent' ? 'fav' : 'recent')}
-            className={`p-1 rounded hover:bg-slate-50 transition-colors ${quickAccessMode === 'fav' ? 'text-amber-500' : 'text-slate-400'}`}
-          >
-            {quickAccessMode === 'recent' ? <History size={13} /> : <Star size={13} />}
-          </button>
+          <span className="font-bold text-slate-800 tracking-tight text-[13px] uppercase">
+            {activeModule === 'recent_fav' ? '收藏' : '资源管理'}
+          </span>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={() => setShowCode(!showCode)} className={`p-1.5 rounded transition-colors ${showCode ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}>
@@ -201,34 +213,37 @@ const Explorer: React.FC<ExplorerProps> = ({
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Quick Access Area */}
-        {!isUserMode && (
-          <div className="p-2 border-b border-slate-50 bg-slate-50/10">
-            <button onClick={() => toggleExpand('quick-access')} className="w-full flex items-center gap-2 p-1.5 hover:bg-white rounded transition-colors group">
-              <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                {expanded['quick-access'] ? <ChevronDown size={12} className="text-slate-400" /> : <ChevronRight size={12} className="text-slate-400" />}
-              </div>
-              {quickAccessMode === 'recent' ? <History size={13} className="text-slate-400" /> : <Star size={13} className="text-amber-400" />}
-              <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                {quickAccessMode === 'recent' ? '最近访问' : '我的收藏'}
-              </span>
-            </button>
-            {expanded['quick-access'] && (
-              <div className="space-y-0.5 mt-0.5 px-2">
-                {(quickAccessMode === 'recent' ? RECENT_ITEMS : FAVORITE_ITEMS).map(item => (
-                  <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer hover:bg-slate-50 transition-colors">
-                    {getIconForType(item.type)}
-                    <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>{item.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="p-2 bg-white space-y-3">
+          {/* 控制台分组 - 仅在非收藏模块显示，并支持折叠 */}
+          {activeModule !== 'recent_fav' && (
+            <div className="px-1.5 pt-1">
+              <button 
+                onClick={() => toggleGroup('console')}
+                className="w-full flex items-center justify-between p-1.5 mb-1 text-slate-400 bg-slate-50/50 rounded hover:bg-slate-100/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest">控制台</span>
+                </div>
+                {groupsExpanded.console ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              </button>
+              
+              {groupsExpanded.console && (
+                <div className="grid grid-cols-1 gap-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  {CONSOLE_ITEMS.map(item => (
+                    <button 
+                      key={item.id} 
+                      onClick={() => onSelectResource({ id: item.id, name: item.name, type: 'page' })}
+                      className="flex items-center gap-2.5 p-1.5 rounded-lg text-[12px] text-slate-600 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-left"
+                    >
+                      <span className="shrink-0">{item.icon}</span>
+                      <span className={`truncate ${activeTab?.id === item.id ? 'font-bold text-blue-600' : ''}`}>{item.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Improved Toolbar Layout */}
-        <div className="p-2 bg-white space-y-2">
-          {/* Row 1: Full-width Search */}
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
             <input 
@@ -240,91 +255,156 @@ const Explorer: React.FC<ExplorerProps> = ({
             />
           </div>
 
-          {/* Row 2: Filter with Text + Actions */}
-          <div className="flex items-center justify-between gap-1.5">
-            <div className="relative flex-1" ref={moduleMenuRef}>
-              <button 
-                onClick={() => setIsModuleMenuOpen(!isModuleMenuOpen)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-slate-200 bg-white hover:border-blue-400 transition-all text-slate-700 shadow-sm"
-              >
-                <span className="text-blue-600">{currentModule.icon}</span>
-                <span className="text-[12px] font-medium flex-1 text-left">{currentModule.label}</span>
-                <ChevronDown size={12} className="text-slate-400" />
-              </button>
-              
-              {isModuleMenuOpen && (
-                <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-slate-100 rounded-lg shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top-left">
-                  {MODULE_OPTIONS.map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => { setSelectedModule(opt.id); setIsModuleMenuOpen(false); }}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 text-[12px] hover:bg-slate-50 transition-colors ${selectedModule === opt.id ? 'text-blue-600 font-bold bg-blue-50/50' : 'text-slate-600'}`}
-                    >
-                      <span className={selectedModule === opt.id ? 'text-blue-600' : 'text-slate-400'}>{opt.icon}</span>
-                      <span>{opt.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-1">
-              <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm" title="新建资源">
-                <Plus size={16} />
-              </button>
-              <div className="relative" ref={moreMenuRef}>
+          {activeModule !== 'recent_fav' && (
+            <div className="flex items-center justify-between gap-1.5">
+              <div className="relative flex-1" ref={moduleMenuRef}>
                 <button 
-                  onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                  className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-400 hover:text-slate-600 transition-all shadow-sm"
+                  onClick={() => setIsModuleMenuOpen(!isModuleMenuOpen)}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-slate-200 bg-white hover:border-blue-400 transition-all text-slate-700 shadow-sm"
                 >
-                  <MoreVertical size={16} />
+                  <span className="text-blue-600">{currentModule.icon}</span>
+                  <span className="text-[12px] font-medium flex-1 text-left">{currentModule.label}</span>
+                  <ChevronDown size={12} className="text-slate-400" />
                 </button>
-                {isMoreMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-100 rounded-lg shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top-right">
-                    <button className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50"><Locate size={14} className="text-slate-400" /> 定位当前元素</button>
-                    <div className="h-[1px] bg-slate-100 my-1 mx-2"></div>
-                    <button onClick={() => setExpanded(prev => {
-                      const next = { ...prev };
-                      currentTree.forEach(d => next[d.id] = true);
-                      return next;
-                    })} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50">展开全部</button>
-                    <button onClick={() => setExpanded({ 'quick-access': expanded['quick-access'] })} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50">收起全部</button>
+                
+                {isModuleMenuOpen && (
+                  <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-slate-100 rounded-lg shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top-left">
+                    {MODULE_OPTIONS.map(opt => (
+                      <button
+                        key={opt.id}
+                        onClick={() => { setSelectedModule(opt.id); setIsModuleMenuOpen(false); }}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-[12px] hover:bg-slate-50 transition-colors ${selectedModule === opt.id ? 'text-blue-600 font-bold bg-blue-50/50' : 'text-slate-600'}`}
+                      >
+                        <span className={selectedModule === opt.id ? 'text-blue-600' : 'text-slate-400'}>{opt.icon}</span>
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm" title="新建资源">
+                  <Plus size={16} />
+                </button>
+                <div className="relative" ref={moreMenuRef}>
+                  <button 
+                    onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                    className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-400 hover:text-slate-600 transition-all shadow-sm"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                  {isMoreMenuOpen && (
+                    <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-100 rounded-lg shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top-right">
+                      <button className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50"><Locate size={14} className="text-slate-400" /> 定位当前元素</button>
+                      <div className="h-[1px] bg-slate-100 my-1 mx-2"></div>
+                      <button onClick={() => setExpanded(prev => {
+                        const next = { ...prev };
+                        currentTree.forEach(d => next[d.id] = true);
+                        return next;
+                      })} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50">展开全部</button>
+                      <button onClick={() => setExpanded({})} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50">收起全部</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-1 no-scrollbar pb-10">
+          {activeModule === 'recent_fav' ? (
+            <div className="space-y-4 pt-1">
+              <div className="px-1">
+                <button 
+                  onClick={() => toggleGroup('recent')}
+                  className="w-full flex items-center justify-between p-1.5 mb-1 text-slate-400 bg-slate-50/50 rounded hover:bg-slate-100/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} />
+                    <span className="text-[11px] font-black uppercase tracking-widest">最近打开</span>
+                  </div>
+                  {groupsExpanded.recent ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                </button>
+                
+                {groupsExpanded.recent && (
+                  <div className="space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {filteredRecent.length > 0 ? filteredRecent.map(item => (
+                      <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer hover:bg-blue-50/50 transition-colors">
+                        {getIconForType(item.type)}
+                        <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>{item.name}</span>
+                      </div>
+                    )) : <div className="p-3 text-[11px] text-slate-400 text-center italic">无匹配记录</div>}
+                  </div>
+                )}
+              </div>
+              
+              <div className="px-1">
+                <button 
+                  onClick={() => toggleGroup('fav')}
+                  className="w-full flex items-center justify-between p-1.5 mb-1 text-slate-400 bg-slate-50/50 rounded hover:bg-slate-100/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Star size={14} className="text-amber-400" />
+                    <span className="text-[11px] font-black uppercase tracking-widest">我的收藏</span>
+                  </div>
+                  {groupsExpanded.fav ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                </button>
+
+                {groupsExpanded.fav && (
+                  <div className="space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {filteredFav.length > 0 ? filteredFav.map(item => (
+                      <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer hover:bg-blue-50/50 transition-colors group">
+                        {getIconForType(item.type)}
+                        <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>{item.name}</span>
+                        <button 
+                          className="opacity-0 group-hover:opacity-100 p-1 text-amber-400 hover:text-slate-400 transition-all"
+                          onClick={(e) => { e.stopPropagation(); /* 触发取消收藏逻辑 */ }}
+                          title="取消收藏"
+                        >
+                          <Star size={12} fill="currentColor" />
+                        </button>
+                      </div>
+                    )) : <div className="p-3 text-[11px] text-slate-400 text-center italic">无匹配收藏</div>}
                   </div>
                 )}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Directory Tree (No divider above) */}
-        <div className="flex-1 overflow-y-auto px-1 no-scrollbar pb-10">
-          {currentTree.map(dir => (
-            <div key={dir.id} className="mb-0.5">
-              <div onClick={() => toggleExpand(dir.id)} className="flex items-center gap-2 p-1.5 hover:bg-slate-100/60 rounded cursor-pointer group">
-                <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                  {expanded[dir.id] ? <ChevronDown size={12} className="text-slate-400" /> : <ChevronRight size={12} className="text-slate-400" />}
+          ) : (
+            currentTree.map(dir => (
+              <div key={dir.id} className="mb-0.5">
+                <div onClick={() => toggleExpand(dir.id)} className="flex items-center gap-2 p-1.5 hover:bg-slate-100/60 rounded cursor-pointer group">
+                  <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                    {expanded[dir.id] ? <ChevronDown size={12} className="text-slate-400" /> : <ChevronRight size={12} className="text-slate-400" />}
+                  </div>
+                  {getIconForType('folder')}
+                  <span className="text-[12px] font-medium text-slate-600 truncate">{showCode ? dir.code : dir.name}</span>
                 </div>
-                {getIconForType('folder')}
-                <span className="text-[12px] font-medium text-slate-600 truncate">{showCode ? dir.code : dir.name}</span>
+                {expanded[dir.id] && dir.children && (
+                  <div className="ml-5 border-l border-slate-100 mt-0.5 mb-1">
+                    {dir.children.map(item => (
+                      <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 pl-4 hover:bg-blue-50/50 rounded cursor-pointer group relative">
+                        <div className="shrink-0">{getIconForType(item.type)}</div>
+                        <span className={`text-[12px] truncate flex-1 transition-colors ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
+                          {showCode ? item.code : item.name}
+                        </span>
+                        <button 
+                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-amber-400 transition-all"
+                          onClick={(e) => { e.stopPropagation(); /* 触发收藏逻辑 */ }}
+                          title="收藏"
+                        >
+                          <Star size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              {expanded[dir.id] && dir.children && (
-                <div className="ml-5 border-l border-slate-100 mt-0.5 mb-1">
-                  {dir.children.map(item => (
-                    <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 pl-4 hover:bg-blue-50/50 rounded cursor-pointer group relative">
-                      <div className="shrink-0">{getIconForType(item.type)}</div>
-                      <span className={`text-[12px] truncate flex-1 transition-colors ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
-                        {showCode ? item.code : item.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
-      {/* Resizable Element Context Drawer */}
       <div 
         style={{ 
           height: showContext ? `${contextHeight}px` : '0px',
@@ -332,7 +412,6 @@ const Explorer: React.FC<ExplorerProps> = ({
         }} 
         className="border-t border-slate-200 bg-slate-50/80 flex flex-col shrink-0 relative transition-all duration-300 ease-in-out overflow-hidden z-10"
       >
-        {/* Resize Handle */}
         <div 
           onMouseDown={() => setIsResizingContext(true)}
           className="absolute top-0 left-0 w-full h-1 cursor-row-resize hover:bg-blue-400/30 z-50 active:bg-blue-500"
@@ -354,7 +433,15 @@ const Explorer: React.FC<ExplorerProps> = ({
                 <div className="text-[10px] text-slate-400 font-mono">{activeTab.code}</div>
               </div>
 
-              {/* 关联元素部分 */}
+              {/* 权限信息 */}
+              <section className="space-y-1.5">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={10} className="text-blue-600" /> 权限信息</h4>
+                <div className="bg-white/50 border border-slate-100 rounded-lg p-2 text-[11px] space-y-1">
+                  <div className="flex justify-between"><span className="text-slate-500">查看权限:</span><span className="text-slate-700">liuqing, admin</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">管理权限:</span><span className="text-blue-600 font-bold">财务管理员组</span></div>
+                </div>
+              </section>
+
               <section className="space-y-1.5">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                   <ArrowUpRight size={10} className="text-blue-600" /> 关联元素
@@ -376,7 +463,6 @@ const Explorer: React.FC<ExplorerProps> = ({
                 </div>
               </section>
 
-              {/* 被关联元素部分 */}
               <section className="space-y-1.5">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                   <ArrowDownLeft size={10} className="text-emerald-600" /> 被关联元素
@@ -394,14 +480,6 @@ const Explorer: React.FC<ExplorerProps> = ({
                       <ExternalLink size={10} className="text-slate-300 group-hover:text-emerald-500" />
                     </div>
                   ))}
-                </div>
-              </section>
-
-              <section className="space-y-1.5">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={10} className="text-blue-600" /> 权限信息</h4>
-                <div className="bg-white/50 border border-slate-100 rounded-lg p-2 text-[11px] space-y-1">
-                  <div className="flex justify-between"><span className="text-slate-500">查看权限:</span><span className="text-slate-700">liuqing, admin</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">管理权限:</span><span className="text-blue-600 font-bold">财务管理员组</span></div>
                 </div>
               </section>
             </>
