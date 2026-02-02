@@ -448,10 +448,14 @@ const Explorer: React.FC<ExplorerProps> = ({
                 </h4>
                 <div className="space-y-1">
                   {[
-                    { name: '财务对账核心逻辑', type: 'logic', code: 'FIN_RECON_LOGIC' },
-                    { name: 'ERP 基础数据模型', type: 'model', code: 'ERP_BASE_MODEL' }
-                  ].map((rel, i) => (
-                    <div key={i} className="bg-white/50 border border-slate-100 rounded-lg p-2 flex items-center gap-2 hover:bg-white transition-colors cursor-pointer group">
+                    { id: 'rel_logic_1', name: '财务对账核心逻辑', type: 'logic', code: 'FIN_RECON_LOGIC' },
+                    { id: 'rel_model_1', name: 'ERP 基础数据模型', type: 'model', code: 'ERP_BASE_MODEL' }
+                  ].map((rel) => (
+                    <div 
+                      key={rel.id} 
+                      onClick={() => onSelectResource(rel)}
+                      className="bg-white/50 border border-slate-100 rounded-lg p-2 flex items-center gap-2 hover:bg-white transition-colors cursor-pointer group"
+                    >
                       {getIconForType(rel.type as ResourceType)}
                       <div className="flex-1 min-w-0">
                         <div className="text-[11px] font-bold text-slate-700 truncate">{rel.name}</div>
@@ -469,9 +473,13 @@ const Explorer: React.FC<ExplorerProps> = ({
                 </h4>
                 <div className="space-y-1">
                   {[
-                    { name: '月度财务审计看板', type: 'ux', code: 'MONTHLY_AUDIT_DASH' }
-                  ].map((rel, i) => (
-                    <div key={i} className="bg-white/50 border border-slate-100 rounded-lg p-2 flex items-center gap-2 hover:bg-white transition-colors cursor-pointer group">
+                    { id: 'rel_ux_audit', name: '月度财务审计看板', type: 'ux', code: 'MONTHLY_AUDIT_DASH' }
+                  ].map((rel) => (
+                    <div 
+                      key={rel.id} 
+                      onClick={() => onSelectResource(rel)}
+                      className="bg-white/50 border border-slate-100 rounded-lg p-2 flex items-center gap-2 hover:bg-white transition-colors cursor-pointer group"
+                    >
                       {getIconForType(rel.type as ResourceType)}
                       <div className="flex-1 min-w-0">
                         <div className="text-[11px] font-bold text-slate-700 truncate">{rel.name}</div>
