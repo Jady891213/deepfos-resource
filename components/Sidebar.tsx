@@ -1,29 +1,20 @@
 
 import React from 'react';
 import { 
-  Database, 
-  Workflow, 
-  Code2, 
-  Layout, 
-  Layers,
-  Star,
   ChevronLeft,
   ChevronRight,
   Blocks,
-  Network,
   Hammer,
   UserCircle,
-  HardDrive,
-  Settings2,
-  Box,
-  TrendingUp,
-  MonitorCheck
+  MonitorCheck,
+  Compass,
+  Link2
 } from 'lucide-react';
 import { ModuleId } from '../types';
 
 interface SidebarProps {
   activeModule: ModuleId;
-  onModuleChange: (id: ModuleId) => void;
+  onModuleChange: (id: string) => void;
   activeDrawerModule: ModuleId | null;
   onDrawerChange: (id: ModuleId) => void;
   width: number;
@@ -49,28 +40,21 @@ const Sidebar: React.FC<SidebarProps> = ({
   onModeToggle
 }) => {
   
-  const devCreationItems = [
-    { id: 'pages', icon: <Layout size={18} />, label: '页面展现' },
-    { id: 'logic', icon: <Code2 size={18} />, label: '流程逻辑' },
-    { id: 'data', icon: <Database size={18} />, label: '数据模型' },
-    { id: 'lakehouse', icon: <HardDrive size={18} />, label: '数据湖仓' },
-    { id: 'integration', icon: <Network size={18} />, label: '数据集成' },
-    { id: 'services', icon: <Settings2 size={18} />, label: '基础服务' },
-    { id: 'v2', icon: <Box size={18} />, label: 'V2组件' },
-    { id: 'finance', icon: <TrendingUp size={18} />, label: '场景-财务工具' },
+  // 恢复为单一的“全量资源”入口
+  const devItems = [
+    { id: 'resources', icon: <Compass size={18} />, label: '全量资源' },
   ] as const;
 
-  const devFunctionalItems = [
-    { id: 'recents', icon: <Star size={18} />, label: '收藏' },
-    { id: 'elements', icon: <Blocks size={18} />, label: '元素管理' },
+  const bottomTools = [
+    { id: 'context', icon: <Link2 size={18} />, label: '关联上下文', isDrawer: true },
+    { id: 'elements', icon: <Blocks size={18} />, label: '元素管理', isTab: true },
   ] as const;
 
   const userItems = [
-    { id: 'finance', icon: <MonitorCheck size={18} />, label: '财务对账' },
-    { id: 'recents', icon: <Star size={18} />, label: '我的收藏' },
+    { id: 'finance', icon: <MonitorCheck size={18} />, label: '财务中心' },
   ] as const;
 
-  const renderNavItems = (items: readonly { id: ModuleId, icon: React.ReactNode, label: string }[], isActive: (id: ModuleId) => boolean, clickHandler: (id: ModuleId) => void) => (
+  const renderNavItems = (items: readonly any[], isActive: (id: string) => boolean, clickHandler: (id: string) => void) => (
     <div className="px-2 flex flex-col gap-0.5 overflow-hidden">
       {items.map((item) => (
         <button
@@ -108,7 +92,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       style={{ width: `${width}px` }}
       className={`relative h-full border-r border-slate-200 flex flex-col bg-white shrink-0 z-10 ${isResizing ? '' : 'transition-[width] duration-300 ease-in-out'}`}
     >
-      {/* Resize Handle */}
       <div 
         onMouseDown={onResizeStart}
         className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-blue-400/30 active:bg-blue-500/50 transition-colors z-50"
@@ -118,19 +101,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         {interfaceMode === 'dev' ? (
           <>
             <div className="overflow-hidden">
-              {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>构建服务</div>}
-              {renderNavItems(devCreationItems, (id) => activeModule === id, onModuleChange)}
+              {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>工作台</div>}
+              {renderNavItems(devItems, (id) => activeModule === id, onModuleChange)}
             </div>
+
             <div className="mt-auto overflow-hidden">
               {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>系统辅助</div>}
-              {renderNavItems(devFunctionalItems, 
-                (id) => (id === 'elements' ? false : activeDrawerModule === id), 
+              {renderNavItems(bottomTools, 
+                (id) => (id === 'context' ? activeDrawerModule === 'context' : false), 
                 (id) => {
-                  if (id === 'elements') {
-                    onModuleChange(id); // Opens tab
-                  } else {
-                    onDrawerChange(id); // Toggles drawer
-                  }
+                  if (id === 'elements') onModuleChange('elements');
+                  else onDrawerChange(id as ModuleId);
                 }
               )}
             </div>

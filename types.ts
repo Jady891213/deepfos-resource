@@ -1,11 +1,12 @@
 
 import React from 'react';
 
-export type ResourceType = 'folder' | 'page' | 'logic' | 'model' | 'stream' | 'connector' | 'component' | 'workflow' | 'db' | 'script' | 'chart';
+export type ResourceType = 'folder' | 'page' | 'logic' | 'model' | 'stream' | 'connector' | 'component' | 'workflow' | 'db' | 'script' | 'chart' | 'ux' | 'spreadsheet' | 'accounting';
 
 export interface ResourceItem {
   id: string;
   name: string;
+  code: string;
   type: ResourceType;
   description?: string;
   version: string;
@@ -17,11 +18,20 @@ export interface ResourceItem {
   tags?: string[];
 }
 
+export interface ResourceRelation {
+  id: string;
+  name: string;
+  code: string;
+  type: ResourceType;
+}
+
 export interface Tab {
   id: string;
   title: string;
+  code?: string;
   type: ResourceType | 'module';
   moduleId?: ModuleId;
+  updatedAt?: string;
 }
 
 export enum ViewMode {
@@ -30,18 +40,10 @@ export enum ViewMode {
   PREVIEW = 'preview'
 }
 
-// Added 'terminal' to ModuleId to fix type overlap error in MainContent.tsx and support terminal-specific logic
 export type ModuleId = 
-  | 'pages' 
-  | 'logic' 
-  | 'data' 
-  | 'lakehouse' 
-  | 'integration' 
-  | 'services' 
-  | 'v2' 
+  | 'resources' // Unified Resource Management
   | 'finance' 
-  | 'recents' 
-  | 'elements'
+  | 'context'   // Active Tab Context (Relations)
   | 'terminal';
 
 export interface NavItem {

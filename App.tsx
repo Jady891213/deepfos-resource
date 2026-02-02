@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Files, 
   Bell, 
@@ -19,34 +19,34 @@ import AIAssistant from './components/AIAssistant';
 
 const INITIAL_DATA: ResourceItem[] = [
   {
-    id: 'f1', name: '0101 每日定时对账核销任务', type: 'workflow', description: '自动从ERP拉取流水并进行匹配...', version: 'v2.1', createdBy: 'liuqing', updatedAt: '2025-05-14 10:28:07', unreadCount: 1, tags: ['Finance', 'Batch']
+    id: 'f1', name: '0101 每日定时对账核销任务', code: 'TASK_0101', type: 'workflow', description: '自动从ERP拉取流水并进行匹配...', version: 'v2.1', createdBy: 'liuqing', updatedAt: '2025-05-14 10:28:07', unreadCount: 1, tags: ['Finance', 'Batch']
   },
   {
-    id: 'f2', name: '财务报表集成接口', type: 'connector', description: '财务报表集成数据流核心连接器', version: 'v1.0.2', createdBy: 'liuqing', updatedAt: '2025-05-14 17:28:09',
+    id: 'f2', name: '财务报表集成接口', code: 'CONN_FIN_REP', type: 'connector', description: '财务报表集成数据流核心连接器', version: 'v1.0.2', createdBy: 'liuqing', updatedAt: '2025-05-14 17:28:09',
   },
   {
-    id: 'f3', name: '对账核销模型-核心逻辑', type: 'model', description: '核心清算与对账业务模型', version: '3.0', createdBy: 'liuqing', updatedAt: '2025-05-23 10:38:41',
+    id: 'f3', name: '对账核销模型-核心逻辑', code: 'MODEL_RECON', type: 'model', description: '核心清算与对账业务模型', version: '3.0', createdBy: 'liuqing', updatedAt: '2025-05-23 10:38:41',
   }
 ];
 
 const App: React.FC = () => {
-  const [activeModule, setActiveModule] = useState<ModuleId>('pages');
-  const [activeDrawerModule, setActiveDrawerModule] = useState<ModuleId | null>('recents');
+  const [activeModule, setActiveModule] = useState<ModuleId>('resources');
+  const [activeDrawerModule, setActiveDrawerModule] = useState<ModuleId | null>('context');
   const [isAIShowing, setIsAIShowing] = useState(false);
   const [interfaceMode, setInterfaceMode] = useState<'dev' | 'user'>('dev');
-  // Initialize with Nav panel VISIBLE but sidebar COLLAPSED
+  
   const [isNavHidden, setIsNavHidden] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(64);
   
-  // Sidebar Resize Logic
   const [isResizing, setIsResizing] = useState(false);
   const isExpanded = sidebarWidth > 120;
 
-  // Multi-tab state - Default is "元素管理"
   const [tabs, setTabs] = useState<Tab[]>([
     { id: 'elements-view', title: '元素管理', type: 'folder' }
   ]);
   const [activeTabId, setActiveTabId] = useState<string | null>('elements-view');
+
+  const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
 
   const startResizing = useCallback(() => {
     setIsResizing(true);
@@ -85,14 +85,24 @@ const App: React.FC = () => {
     setSidebarWidth(isExpanded ? 64 : 200);
   };
 
-  const openTab = (item: ResourceItem | { id: string, name: string, type: any, moduleId?: ModuleId }) => {
-    const existing = tabs.find(t => t.id === item.id);
-    if (!existing) {
-      const moduleId = 'moduleId' in item ? item.moduleId : undefined;
-      setTabs([...tabs, { id: item.id, title: item.name, type: item.type, moduleId }]);
-    }
+  const openTab = useCallback((item: ResourceItem | { id: string, name: string, code?: string, type: any, moduleId?: ModuleId, updatedAt?: string }) => {
+    setTabs(prevTabs => {
+      const existing = prevTabs.find(t => t.id === item.id);
+      if (!existing) {
+        const moduleId = 'moduleId' in item ? item.moduleId : undefined;
+        return [...prevTabs, { 
+          id: item.id, 
+          title: item.name, 
+          code: item.code, 
+          type: item.type, 
+          moduleId,
+          updatedAt: item.updatedAt
+        }];
+      }
+      return prevTabs;
+    });
     setActiveTabId(item.id);
-  };
+  }, []);
 
   const closeTab = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -107,18 +117,12 @@ const App: React.FC = () => {
     setTabs(newTabs);
   };
 
-  const moduleNames: Record<ModuleId, string> = {
-    pages: '页面展现',
-    logic: '流程逻辑',
-    data: '数据模型',
-    lakehouse: '数据湖仓',
-    integration: '数据集成',
-    services: '基础服务',
-    v2: 'V2组件',
-    finance: '场景-财务工具',
-    recents: '收藏',
-    elements: '元素管理',
-    terminal: '系统控制台'
+  const handleSidebarModuleChange = (id: string) => {
+    if (id === 'elements') {
+      openTab({ id: 'elements-view', name: '元素管理', type: 'folder' });
+    } else {
+      setActiveModule(id as ModuleId);
+    }
   };
 
   const explorerWidth = 240;
@@ -126,10 +130,8 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-white selection:bg-blue-100 antialiased font-sans text-[13px]">
-      {/* Global Top Header - Continuous Top Strip */}
       <header className="h-14 flex items-center border-b border-slate-200 bg-white shrink-0 z-30">
         <div className="flex items-center px-4 h-full shrink-0">
-          {/* Toggle button at the very left */}
           <button 
             onClick={() => setIsNavHidden(!isNavHidden)}
             className={`p-1.5 rounded-lg transition-all mr-4 ${isNavHidden ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
@@ -138,7 +140,6 @@ const App: React.FC = () => {
             {isNavHidden ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
           </button>
           
-          {/* Branding */}
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-sm shrink-0">
               <Layers size={18} strokeWidth={2.5} />
@@ -152,7 +153,6 @@ const App: React.FC = () => {
 
         <div className="w-[1px] h-6 bg-slate-200 mx-4 shrink-0"></div>
 
-        {/* Tabs Section - Centered/Flexible strip */}
         <div className="flex-1 flex h-full overflow-x-auto no-scrollbar items-end gap-0.5">
           {tabs.map((tab) => (
             <div 
@@ -176,7 +176,6 @@ const App: React.FC = () => {
           ))}
         </div>
 
-        {/* Right Utils */}
         <div className="flex items-center gap-4 px-5 border-l border-slate-100 h-full shrink-0">
           <button onClick={() => setIsAIShowing(!isAIShowing)} className={`p-1.5 rounded-lg transition-colors ${isAIShowing ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-100'}`}>
             <Sparkles size={18} />
@@ -191,9 +190,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Body - Split into Nav (Sidebar+Explorer) and Content */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Navigation Unit (Sidebar + Explorer) */}
         <div 
           className="flex overflow-hidden transition-all duration-300 ease-in-out border-r border-slate-200 bg-white shrink-0 relative z-20"
           style={{ 
@@ -201,16 +198,9 @@ const App: React.FC = () => {
             marginLeft: isNavHidden ? `-${navContainerWidth}px` : '0px'
           }}
         >
-          {/* Sidebar Area */}
           <Sidebar 
             activeModule={activeModule} 
-            onModuleChange={(id) => {
-              if (id === 'elements') {
-                openTab({ id: 'elements-view', name: '元素管理', type: 'folder' });
-              } else {
-                setActiveModule(id);
-              }
-            }} 
+            onModuleChange={handleSidebarModuleChange} 
             activeDrawerModule={activeDrawerModule}
             onDrawerChange={(id) => {
               setActiveDrawerModule(activeDrawerModule === id ? null : id);
@@ -223,64 +213,31 @@ const App: React.FC = () => {
             interfaceMode={interfaceMode}
             onModeToggle={(mode) => {
               setInterfaceMode(mode);
-              setActiveModule(mode === 'dev' ? 'pages' : 'finance');
+              setActiveModule(mode === 'dev' ? 'resources' : 'finance');
             }}
           />
 
-          {/* Explorer Area */}
           <div className="flex-1 flex flex-col border-l border-slate-100 bg-white relative overflow-hidden">
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="h-14 flex items-center px-4 justify-between border-b border-slate-100 bg-white shrink-0">
-                <span className="font-bold text-slate-800 tracking-tight flex items-center gap-2 text-[13px] truncate">
-                  <div className="w-4 h-4 bg-slate-100 rounded flex items-center justify-center shrink-0">
-                    <Boxes size={10} className="text-slate-500" />
-                  </div>
-                  {interfaceMode === 'user' ? '财务对账核销目录' : moduleNames[activeModule]}
-                </span>
-              </div>
-              <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
-                <Explorer 
-                  key={`${activeModule}-${interfaceMode}`} 
-                  activeModule={activeModule} 
-                  onSelectResource={(item) => openTab(item)}
-                  isUserMode={interfaceMode === 'user'} 
-                />
-              </div>
+              <Explorer 
+                key={`${activeModule}-${interfaceMode}`} 
+                activeModule={activeModule} 
+                onSelectResource={(item) => openTab(item)}
+                isUserMode={interfaceMode === 'user'} 
+                activeTab={activeTab}
+                showContext={activeDrawerModule === 'context'}
+                onCloseContext={() => setActiveDrawerModule(null)}
+              />
             </div>
-
-            {interfaceMode === 'dev' && (
-              <div className={`border-t border-slate-200 bg-slate-50 transition-all duration-300 ease-in-out flex flex-col ${
-                activeDrawerModule ? 'h-[40%]' : 'h-0'
-              }`}>
-                <div className="h-9 flex items-center px-4 justify-between border-b border-slate-200 bg-white shrink-0">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
-                    {activeDrawerModule ? moduleNames[activeDrawerModule] : ''}
-                  </span>
-                  <button onClick={() => setActiveDrawerModule(null)} className="p-1 hover:bg-slate-100 rounded text-slate-400">
-                    <ChevronDown size={14} />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
-                  {activeDrawerModule && (
-                    <Explorer 
-                      key={activeDrawerModule} 
-                      activeModule={activeDrawerModule} 
-                      onSelectResource={(item) => openTab(item)} 
-                    />
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Content Area - Naturally fills remaining space */}
         <main className="flex-1 flex flex-row overflow-hidden relative bg-[#f8fafc] z-10">
           <div className="flex-1 overflow-hidden">
             <MainContent 
               data={INITIAL_DATA} 
               viewMode={ViewMode.EXPLORER} 
-              activeTab={tabs.find(t => t.id === activeTabId)} 
+              activeTab={activeTab} 
               onOpenTab={openTab}
             />
           </div>
