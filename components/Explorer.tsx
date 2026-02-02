@@ -123,6 +123,7 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [showCode, setShowCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [contextHeight, setContextHeight] = useState(320);
+  const [isResizingContext, setIsResizingContext] = useState(false);
   
   const moduleMenuRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
@@ -135,6 +136,30 @@ const Explorer: React.FC<ExplorerProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // 修复高度调整逻辑
+  useEffect(() => {
+    if (isResizingContext) {
+      const onMouseMove = (e: MouseEvent) => {
+        // 计算新的高度：窗口底部 y 坐标 - 鼠标 y 坐标
+        const newHeight = window.innerHeight - e.clientY;
+        setContextHeight(Math.max(100, Math.min(800, newHeight)));
+      };
+      const onMouseUp = () => setIsResizingContext(false);
+      
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
+      
+      return () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+    }
+  }, [isResizingContext]);
 
   const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -307,6 +332,12 @@ const Explorer: React.FC<ExplorerProps> = ({
         }} 
         className="border-t border-slate-200 bg-slate-50/80 flex flex-col shrink-0 relative transition-all duration-300 ease-in-out overflow-hidden z-10"
       >
+        {/* Resize Handle */}
+        <div 
+          onMouseDown={() => setIsResizingContext(true)}
+          className="absolute top-0 left-0 w-full h-1 cursor-row-resize hover:bg-blue-400/30 z-50 active:bg-blue-500"
+        />
+
         <div className="h-9 flex items-center px-3 justify-between border-b border-slate-200 bg-white">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <Compass size={12} className="text-blue-600" /> 元素上下文
@@ -315,13 +346,14 @@ const Explorer: React.FC<ExplorerProps> = ({
             <ChevronDown size={14} />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-3 no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3 no-scrollbar space-y-4">
           {activeTab ? (
-            <div className="space-y-4">
-               <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm space-y-1.5">
+            <>
+              <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm space-y-1.5">
                 <div className="flex items-center gap-2 text-[12px] font-bold text-slate-800">{activeTab.title}</div>
                 <div className="text-[10px] text-slate-400 font-mono">{activeTab.code}</div>
               </div>
+              
               <section className="space-y-1.5">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={10} className="text-blue-600" /> 权限信息</h4>
                 <div className="bg-white/50 border border-slate-100 rounded-lg p-2 text-[11px] space-y-1">
@@ -329,7 +361,52 @@ const Explorer: React.FC<ExplorerProps> = ({
                   <div className="flex justify-between"><span className="text-slate-500">管理权限:</span><span className="text-blue-600 font-bold">财务管理员组</span></div>
                 </div>
               </section>
-            </div>
+
+              {/* 关联元素部分 */}
+              <section className="space-y-1.5">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <ArrowUpRight size={10} className="text-blue-600" /> 关联元素
+                </h4>
+                <div className="space-y-1">
+                  {[
+                    { name: '财务对账核心逻辑', type: 'logic', code: 'FIN_RECON_LOGIC' },
+                    { name: 'ERP 基础数据模型', type: 'model', code: 'ERP_BASE_MODEL' }
+                  ].map((rel, i) => (
+                    <div key={i} className="bg-white/50 border border-slate-100 rounded-lg p-2 flex items-center gap-2 hover:bg-white transition-colors cursor-pointer group">
+                      {getIconForType(rel.type as ResourceType)}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] font-bold text-slate-700 truncate">{rel.name}</div>
+                        <div className="text-[9px] text-slate-400 font-mono truncate">{rel.code}</div>
+                      </div>
+                      <ExternalLink size={10} className="text-slate-300 group-hover:text-blue-500" />
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 被关联元素部分 */}
+              <section className="space-y-1.5">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <ArrowDownLeft size={10} className="text-emerald-600" /> 被关联元素
+                </h4>
+                <div className="space-y-1">
+                  {[
+                    { name: '月度财务审计看板', type: 'ux', code: 'MONTHLY_AUDIT_DASH' }
+                  ].map((rel, i) => (
+                    <div key={i} className="bg-white/50 border border-slate-100 rounded-lg p-2 flex items-center gap-2 hover:bg-white transition-colors cursor-pointer group">
+                      {getIconForType(rel.type as ResourceType)}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] font-bold text-slate-700 truncate">{rel.name}</div>
+                        <div className="text-[9px] text-slate-400 font-mono truncate">{rel.code}</div>
+                      </div>
+                      <ExternalLink size={10} className="text-slate-300 group-hover:text-emerald-500" />
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              
+            </>
           ) : (
             <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale p-4">
               <Compass size={32} className="mb-2" />
