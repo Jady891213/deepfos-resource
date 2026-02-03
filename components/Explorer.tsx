@@ -136,8 +136,7 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [showCode, setShowCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // 调高初始高度至 400
-  const [contextHeight, setContextHeight] = useState(400);
+  const [contextHeight, setContextHeight] = useState(400); // 初始高度 400px
   const [isResizingContext, setIsResizingContext] = useState(false);
 
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
@@ -148,15 +147,13 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [pinnedItems, setPinnedItems] = useState<ResourceItem[]>(INITIAL_FAVORITE_ITEMS);
   const prevTabsRef = useRef<Tab[]>(tabs);
 
-  // 响应式高度调整逻辑
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizingContext) return;
       const explorerRect = document.querySelector('.explorer-container')?.getBoundingClientRect();
       if (!explorerRect) return;
       const newHeight = explorerRect.bottom - e.clientY;
-      // 限制最小和最大高度
-      setContextHeight(Math.max(120, Math.min(newHeight, 600)));
+      setContextHeight(Math.max(120, Math.min(newHeight, 650)));
     };
 
     const handleMouseUp = () => setIsResizingContext(false);
@@ -237,13 +234,9 @@ const Explorer: React.FC<ExplorerProps> = ({
     return q ? pinnedItems.filter(p => p.name.toLowerCase().includes(q) || (p.code && p.code.toLowerCase().includes(q))) : pinnedItems;
   }, [searchQuery, pinnedItems]);
 
-  const [lockedDrawerType, setLockedDrawerType] = useState<ModuleId | null>(activeDrawerType || null);
-  useEffect(() => { if (activeDrawerType) setLockedDrawerType(activeDrawerType); }, [activeDrawerType]);
-
   const currentTree = useMemo(() => {
     let data = isUserMode ? (MODULE_DATA[activeModule] || []) : (MODULE_DATA[selectedModule] || MODULE_DATA['all'] || []);
     
-    // 类型筛选逻辑实现
     if (filterTypeLabel !== '全量资源') {
       const typeMap: Record<string, ResourceType[]> = {
         '页面展现': ['ux', 'spreadsheet'],
@@ -280,21 +273,8 @@ const Explorer: React.FC<ExplorerProps> = ({
     return searchRecursively(data);
   }, [selectedModule, activeModule, searchQuery, isUserMode, filterTypeLabel]);
 
-  const expandAll = () => {
-    const newExpanded: Record<string, boolean> = {};
-    currentTree.forEach(dir => { newExpanded[dir.id] = true; });
-    setExpanded(newExpanded);
-    setIsMoreMenuOpen(false);
-  };
-
-  const collapseAll = () => {
-    setExpanded({});
-    setIsMoreMenuOpen(false);
-  };
-
-  const locateActive = () => {
-    setIsMoreMenuOpen(false);
-  };
+  const [lockedDrawerType, setLockedDrawerType] = useState<ModuleId | null>(activeDrawerType || null);
+  useEffect(() => { if (activeDrawerType) setLockedDrawerType(activeDrawerType); }, [activeDrawerType]);
 
   return (
     <div className="flex flex-col h-full bg-white select-none relative border-r border-slate-100 explorer-container overflow-hidden">
@@ -352,9 +332,9 @@ const Explorer: React.FC<ExplorerProps> = ({
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsMoreMenuOpen(false)}></div>
                     <div className="absolute top-full right-0 mt-1 w-40 bg-white border border-slate-100 rounded shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top-right">
-                      <button onClick={locateActive} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 transition-colors"><Locate size={14} /> 定位当前元素</button>
-                      <button onClick={expandAll} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 transition-colors"><ChevronLast size={14} className="rotate-90" /> 展开所有</button>
-                      <button onClick={collapseAll} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 transition-colors"><ChevronFirst size={14} className="rotate-90" /> 收起所有</button>
+                      <button onClick={() => setIsMoreMenuOpen(false)} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 transition-colors"><Locate size={14} /> 定位当前元素</button>
+                      <button onClick={() => { setIsMoreMenuOpen(false); setExpanded(Object.fromEntries(currentTree.map(d => [d.id, true]))); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 transition-colors"><ChevronLast size={14} className="rotate-90" /> 展开所有</button>
+                      <button onClick={() => { setIsMoreMenuOpen(false); setExpanded({}); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 transition-colors"><ChevronFirst size={14} className="rotate-90" /> 收起所有</button>
                     </div>
                   </>
                 )}
@@ -381,11 +361,9 @@ const Explorer: React.FC<ExplorerProps> = ({
                       return (
                         <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer group transition-all hover:bg-blue-50/50">
                           {getIconForType(item.type)}
-                          <span className={`text-[12px] truncate flex-1 transition-all ${isOpen ? 'text-slate-700 font-medium' : 'text-slate-500'}`}>
-                            {showCode ? item.code : item.name}
-                          </span>
+                          <span className={`text-[12px] truncate flex-1 transition-all ${isOpen ? 'text-slate-700 font-medium' : 'text-slate-500'}`}>{showCode ? item.code : item.name}</span>
                           {isOpen && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full opacity-60"></div>}
-                          <button className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded" onClick={(e) => { e.stopPropagation(); handleUnpin(item.id); }}><PinOff size={12} /></button>
+                          <button className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-all" onClick={(e) => { e.stopPropagation(); handleUnpin(item.id); }}><PinOff size={12} /></button>
                         </div>
                       );
                     }) : <div className="p-3 text-[11px] text-slate-300 text-center italic">暂无常用项</div>}
@@ -400,6 +378,7 @@ const Explorer: React.FC<ExplorerProps> = ({
                 </button>
                 {groupsExpanded.recent && (
                   <div className="space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {/* 已打开 Tab 部分 */}
                     {activeOpenedTabs.map(item => {
                       const isPinned = pinnedItems.some(p => p.id === item.id);
                       return (
@@ -407,8 +386,7 @@ const Explorer: React.FC<ExplorerProps> = ({
                           {getIconForType(item.type as ResourceType)}
                           <span className={`text-[12px] truncate flex-1 transition-all ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-700 font-medium'}`}>{showCode ? (item.code || item.title) : item.title}</span>
                           <div className="flex items-center">
-                            {/* 增加固定到常用按钮 */}
-                            <button className={`p-1 rounded transition-all ${isPinned ? 'text-blue-600 opacity-40 cursor-default' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`} onClick={(e) => { e.stopPropagation(); if (!isPinned) handlePin(item); }}>
+                            <button className={`p-1 rounded transition-all ${isPinned ? 'text-blue-600 opacity-40' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`} onClick={(e) => { e.stopPropagation(); if (!isPinned) handlePin(item); }} title="固定到常用">
                               <Pin size={12} fill={isPinned ? "currentColor" : "none"} />
                             </button>
                             <button onClick={(e) => { e.stopPropagation(); onCloseTab(item.id); }} className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-rose-500 rounded hover:bg-rose-50 transition-all"><X size={12} /></button>
@@ -419,13 +397,23 @@ const Explorer: React.FC<ExplorerProps> = ({
                     {(activeOpenedTabs.length > 0 && filteredHistory.length > 0) && (
                       <div className="flex items-center gap-2 py-2 px-1 opacity-40"><div className="flex-1 h-[1px] bg-slate-200"></div><span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">最近关闭</span><div className="flex-1 h-[1px] bg-slate-200"></div></div>
                     )}
+                    {/* 历史部分 - 修复重叠点击逻辑 */}
                     {filteredHistory.map(item => {
                       const isPinned = pinnedItems.some(p => p.id === item.id);
                       return (
                         <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer group hover:bg-slate-50 transition-colors">
                           <div className="opacity-30 grayscale shrink-0">{getIconForType(item.type)}</div>
                           <span className={`text-[12px] truncate flex-1 text-slate-400 group-hover:text-slate-500 transition-colors`}>{showCode ? item.code : item.name}</span>
-                          <button className={`p-1 rounded transition-all ${isPinned ? 'text-blue-600 opacity-40' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`} onClick={(e) => { e.stopPropagation(); if (!isPinned) handlePin(item); }}><Pin size={12} fill={isPinned ? "currentColor" : "none"} /></button>
+                          <button 
+                            className={`p-1.5 rounded transition-all ${isPinned ? 'text-blue-600 opacity-40' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`} 
+                            onClick={(e) => { 
+                              e.stopPropagation(); // 关键修复：阻止冒泡
+                              if (!isPinned) handlePin(item); 
+                            }}
+                            title="固定到常用"
+                          >
+                            <Pin size={12} fill={isPinned ? "currentColor" : "none"} />
+                          </button>
                         </div>
                       );
                     })}
@@ -454,8 +442,7 @@ const Explorer: React.FC<ExplorerProps> = ({
       </div>
 
       <div style={{ height: showContext ? `${contextHeight}px` : '0px', opacity: showContext ? 1 : 0 }} className="border-t border-slate-200 bg-slate-50/80 flex flex-col shrink-0 relative transition-all duration-300 ease-in-out overflow-hidden z-10">
-        {/* 顶部缩放热区 */}
-        <div onMouseDown={() => setIsResizingContext(true)} className="absolute top-0 left-0 w-full h-1 cursor-row-resize hover:bg-blue-400/30 z-50 active:bg-blue-500" />
+        <div onMouseDown={() => setIsResizingContext(true)} className="absolute top-0 left-0 w-full h-1 cursor-row-resize hover:bg-blue-400/30 z-50 active:bg-blue-500 transition-colors" />
         <div className="h-9 flex items-center px-3 justify-between border-b border-slate-200 bg-white">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
             {lockedDrawerType === 'console' ? <><Terminal size={12} className="text-blue-600" /> 控制台</> : <><Info size={12} className="text-blue-600" /> 元素信息</>}
@@ -479,7 +466,6 @@ const Explorer: React.FC<ExplorerProps> = ({
                 <div className="text-[10px] text-slate-400 font-mono bg-slate-50 px-1.5 py-0.5 rounded inline-block">{activeTab.code}</div>
               </div>
               
-              {/* 权限 & 版本 置顶显示 */}
               <section className="space-y-1.5">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={11} className="text-blue-600" /> 权限 & 版本</h4>
                 <div className="bg-white border border-slate-100 rounded-lg p-2 text-[11px] space-y-1.5">
