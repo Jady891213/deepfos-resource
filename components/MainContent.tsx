@@ -25,7 +25,8 @@ import {
   PackageOpen,
   ChevronRight,
   Loader2,
-  Home
+  Home,
+  RefreshCw
 } from 'lucide-react';
 import { ResourceItem, ViewMode, Tab } from '../types';
 
@@ -34,6 +35,7 @@ interface MainContentProps {
   viewMode: ViewMode;
   activeTab?: Tab;
   onOpenTab: (item: ResourceItem) => void;
+  isRefreshing?: boolean;
 }
 
 const FILTER_CATEGORIES = [
@@ -54,15 +56,16 @@ const HISTORY_DATA = [
   { user: 'System', action: '自动备份完成', target: '全局数据仓库', time: '昨天 02:00' },
 ];
 
-const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, onOpenTab }) => {
+const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, onOpenTab, isRefreshing: externalRefreshing }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<string>('all');
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [localRefreshing, setLocalRefreshing] = useState(false);
   
   const historyRef = useRef<HTMLDivElement>(null);
+  const isRefreshing = externalRefreshing || localRefreshing;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -79,11 +82,8 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
   };
 
   const handleApplyFilters = () => {
-    setIsRefreshing(true);
-    // 模拟刷新效果，不关闭筛选器面板
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 600);
+    setLocalRefreshing(true);
+    setTimeout(() => setLocalRefreshing(false), 600);
   };
 
   if (!activeTab) return (
@@ -99,14 +99,20 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
   if (isPlaceholderTab) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 p-12 text-center h-full">
-        <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-blue-500/10"><Code2 size={40} /></div>
+        <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-blue-500/10 relative">
+          <Code2 size={40} />
+          {isRefreshing && (
+            <div className="absolute -inset-2 bg-white/40 backdrop-blur-[2px] rounded-full flex items-center justify-center">
+              <RefreshCw className="animate-spin text-blue-600" size={24} />
+            </div>
+          )}
+        </div>
         <h2 className="text-2xl font-black text-slate-800 mb-2">{activeTab.title}</h2>
         <p className="text-slate-400 max-w-sm">正在加载资源编辑器...</p>
       </div>
     );
   }
 
-  // 模拟路径数据
   const breadcrumbPath = [
     { id: 'root', name: '全量资源' },
     { id: 'finance', name: '财务模块' },
@@ -115,7 +121,6 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
 
   return (
     <div className="flex flex-col h-full bg-[#f9fafb] relative overflow-hidden">
-      {/* Top Action Toolbar */}
       <div className="px-6 py-4 flex items-center justify-between border-b border-slate-200 bg-white shrink-0 z-20">
         <div className="flex items-center gap-3">
           <button 
@@ -126,9 +131,13 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
           >
             <Filter size={14} /> 筛选
           </button>
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-            <input type="text" placeholder="搜索名称或描述..." className="w-72 border border-slate-200 rounded-lg py-1.5 pl-9 pr-3 text-[13px] focus:border-blue-500 outline-none bg-slate-50/50" />
+          <div className="relative group flex items-center">
+            <Search className="absolute left-3 text-slate-400" size={14} />
+            <input 
+              type="text" 
+              placeholder="搜索名称或描述..." 
+              className="w-72 border border-slate-200 rounded-lg py-[7px] pl-9 pr-3 text-[13px] focus:border-blue-500 outline-none bg-slate-50/50 transition-all" 
+            />
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -141,7 +150,6 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
             <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="权限设置">
               <ShieldCheck size={18} />
             </button>
-
             <div className="relative" ref={historyRef}>
               <button onClick={() => setIsHistoryOpen(!isHistoryOpen)} className={`p-2 rounded-lg transition-colors ${isHistoryOpen ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`} title="操作历史">
                 <History size={18} />
@@ -172,14 +180,8 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
         </div>
       </div>
 
-      {/* Main Area with Anchored Sidebar Filter */}
       <div className="flex-1 flex overflow-hidden bg-[#f8fafc]">
-        {/* Anchored Filter Panel */}
-        <div 
-          className={`h-full bg-white border-r border-slate-200 shrink-0 transition-all duration-300 ease-in-out flex flex-col overflow-hidden shadow-[inset_-1px_0_0_rgba(0,0,0,0.05)] ${
-            isFilterOpen ? 'w-72' : 'w-0'
-          }`}
-        >
+        <div className={`h-full bg-white border-r border-slate-200 shrink-0 transition-all duration-300 ease-in-out flex flex-col overflow-hidden shadow-[inset_-1px_0_0_rgba(0,0,0,0.05)] ${isFilterOpen ? 'w-72' : 'w-0'}`}>
           <div className="w-72 flex flex-col h-full">
             <div className="h-12 flex items-center justify-between px-5 border-b border-slate-100 shrink-0">
               <span className="font-bold text-slate-800 text-[13px]">筛选过滤</span>
@@ -224,9 +226,7 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
           </div>
         </div>
 
-        {/* Scrollable Table Area */}
         <div className="flex-1 h-full overflow-auto p-6 no-scrollbar relative flex flex-col">
-          {/* Breadcrumb Path - Added Here */}
           <div className="flex items-center gap-1.5 mb-4 px-1 overflow-x-auto no-scrollbar shrink-0">
             <button className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
               <Home size={14} />
@@ -234,25 +234,16 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
             {breadcrumbPath.map((item, index) => (
               <React.Fragment key={item.id}>
                 <ChevronRight size={12} className="text-slate-300 shrink-0" />
-                <button 
-                  className={`text-[12px] whitespace-nowrap px-1.5 py-0.5 rounded transition-colors ${
-                    index === breadcrumbPath.length - 1 
-                      ? 'text-slate-800 font-bold cursor-default' 
-                      : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
-                  }`}
-                >
-                  {item.name}
-                </button>
+                <button className={`text-[12px] whitespace-nowrap px-1.5 py-0.5 rounded transition-colors ${index === breadcrumbPath.length - 1 ? 'text-slate-800 font-bold cursor-default' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}>{item.name}</button>
               </React.Fragment>
             ))}
           </div>
 
-          {/* Refreshing Overlay */}
           {isRefreshing && (
             <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/40 backdrop-blur-[1px] transition-all">
               <div className="bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center gap-2">
                 <Loader2 className="animate-spin text-blue-600" size={24} />
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">更新列表中...</span>
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">刷新中...</span>
               </div>
             </div>
           )}
@@ -309,7 +300,6 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
         </div>
       </div>
 
-      {/* Footer Pagination */}
       <div className="px-6 py-3.5 border-t border-slate-200 flex items-center justify-between text-[12px] text-slate-500 bg-white shrink-0 z-20">
         <div className="flex items-center gap-2">
           <span>共 <span className="font-bold text-slate-800">124</span> 个资源对象</span>

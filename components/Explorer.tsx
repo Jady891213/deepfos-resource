@@ -51,6 +51,8 @@ interface ExplorerProps {
   activeDrawerType?: ModuleId | null;
   onCloseContext?: () => void;
   onToggleCollapse?: () => void;
+  pinnedItems?: ResourceItem[];
+  onUpdatePinned?: (items: ResourceItem[]) => void;
 }
 
 const MODULE_DATA: Record<string, ResourceItem[]> = {
@@ -89,10 +91,6 @@ const MODULE_DATA: Record<string, ResourceItem[]> = {
   ]
 };
 
-const INITIAL_FAVORITE_ITEMS: ResourceItem[] = [
-  { id: 'res_ux_1', name: '年度预算录入表', code: 'BUDGET_SHEET', type: 'spreadsheet', version: '1.0', createdBy: 'liuqing', updatedAt: '2025-05-10' },
-];
-
 const INITIAL_HISTORY_ITEMS: ResourceItem[] = [
   { id: 'res_ux_comp_1', name: '利润分配逻辑表', code: 'PROFIT_DIST', type: 'spreadsheet', version: '1.0', createdBy: 'liuqing', updatedAt: '2025-05-12' },
 ];
@@ -128,7 +126,9 @@ const Explorer: React.FC<ExplorerProps> = ({
   showContext = true,
   activeDrawerType,
   onCloseContext,
-  onToggleCollapse
+  onToggleCollapse,
+  pinnedItems = [],
+  onUpdatePinned
 }) => {
   const [selectedModule, setSelectedModule] = useState(isUserMode ? activeModule : 'all');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ 'root_ux': true, 'root_model': true, 'root_logic': true });
@@ -136,7 +136,7 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [showCode, setShowCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  const [contextHeight, setContextHeight] = useState(400); // 初始高度 400px
+  const [contextHeight, setContextHeight] = useState(400); 
   const [isResizingContext, setIsResizingContext] = useState(false);
 
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
@@ -144,7 +144,6 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [filterTypeLabel, setFilterTypeLabel] = useState('全量资源');
 
   const [historyItems, setHistoryItems] = useState<ResourceItem[]>(INITIAL_HISTORY_ITEMS);
-  const [pinnedItems, setPinnedItems] = useState<ResourceItem[]>(INITIAL_FAVORITE_ITEMS);
   const prevTabsRef = useRef<Tab[]>(tabs);
 
   useEffect(() => {
@@ -155,9 +154,7 @@ const Explorer: React.FC<ExplorerProps> = ({
       const newHeight = explorerRect.bottom - e.clientY;
       setContextHeight(Math.max(120, Math.min(newHeight, 650)));
     };
-
     const handleMouseUp = () => setIsResizingContext(false);
-
     if (isResizingContext) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
@@ -167,7 +164,6 @@ const Explorer: React.FC<ExplorerProps> = ({
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     }
-
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -203,24 +199,24 @@ const Explorer: React.FC<ExplorerProps> = ({
   const toggleGroup = (id: string) => setGroupsExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
   const handlePin = useCallback((item: any) => {
-    setPinnedItems(prev => {
-      if (prev.some(i => i.id === item.id)) return prev;
-      const newItem: ResourceItem = {
-        id: item.id,
-        name: item.name || item.title,
-        code: item.code || '',
-        type: item.type,
-        version: '1.0',
-        createdBy: 'system',
-        updatedAt: item.updatedAt || new Date().toISOString()
-      };
-      return [newItem, ...prev];
-    });
-  }, []);
+    if (!onUpdatePinned) return;
+    if (pinnedItems.some(i => i.id === item.id)) return;
+    const newItem: ResourceItem = {
+      id: item.id,
+      name: item.name || item.title,
+      code: item.code || '',
+      type: item.type,
+      version: '1.0',
+      createdBy: 'system',
+      updatedAt: item.updatedAt || new Date().toISOString()
+    };
+    onUpdatePinned([newItem, ...pinnedItems]);
+  }, [pinnedItems, onUpdatePinned]);
 
   const handleUnpin = useCallback((itemId: string) => {
-    setPinnedItems(prev => prev.filter(i => i.id !== itemId));
-  }, []);
+    if (!onUpdatePinned) return;
+    onUpdatePinned(pinnedItems.filter(i => i.id !== itemId));
+  }, [pinnedItems, onUpdatePinned]);
 
   const activeOpenedTabs = useMemo(() => tabs.filter(t => t.id !== 'elements-view' && t.id !== 'default-home'), [tabs]);
   
@@ -378,7 +374,6 @@ const Explorer: React.FC<ExplorerProps> = ({
                 </button>
                 {groupsExpanded.recent && (
                   <div className="space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                    {/* 已打开 Tab 部分 */}
                     {activeOpenedTabs.map(item => {
                       const isPinned = pinnedItems.some(p => p.id === item.id);
                       return (
@@ -397,17 +392,16 @@ const Explorer: React.FC<ExplorerProps> = ({
                     {(activeOpenedTabs.length > 0 && filteredHistory.length > 0) && (
                       <div className="flex items-center gap-2 py-2 px-1 opacity-40"><div className="flex-1 h-[1px] bg-slate-200"></div><span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">最近关闭</span><div className="flex-1 h-[1px] bg-slate-200"></div></div>
                     )}
-                    {/* 历史部分 - 修复重叠点击逻辑 */}
                     {filteredHistory.map(item => {
                       const isPinned = pinnedItems.some(p => p.id === item.id);
                       return (
-                        <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer group hover:bg-slate-50 transition-colors">
+                        <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer group hover:bg-slate-50 transition-colors relative">
                           <div className="opacity-30 grayscale shrink-0">{getIconForType(item.type)}</div>
                           <span className={`text-[12px] truncate flex-1 text-slate-400 group-hover:text-slate-500 transition-colors`}>{showCode ? item.code : item.name}</span>
                           <button 
-                            className={`p-1.5 rounded transition-all ${isPinned ? 'text-blue-600 opacity-40' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`} 
+                            className={`p-1.5 rounded transition-all z-10 ${isPinned ? 'text-blue-600 opacity-40' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`} 
                             onClick={(e) => { 
-                              e.stopPropagation(); // 关键修复：阻止冒泡
+                              e.stopPropagation(); 
                               if (!isPinned) handlePin(item); 
                             }}
                             title="固定到常用"

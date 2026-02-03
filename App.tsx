@@ -14,7 +14,13 @@ import {
   MoreHorizontal,
   ArrowRightCircle,
   XCircle,
-  MinusCircle
+  MinusCircle,
+  RefreshCw,
+  Pin,
+  ExternalLink,
+  Settings,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { ViewMode, ResourceItem, ModuleId, Tab } from './types';
 import Sidebar from './components/Sidebar';
@@ -47,7 +53,7 @@ interface ContextMenu {
 }
 
 const App: React.FC = () => {
-  const [activeModule, setActiveModule] = useState<ModuleId>('recent_fav'); // 默认进入最近打开
+  const [activeModule, setActiveModule] = useState<ModuleId>('recent_fav');
   const [activeDrawerModule, setActiveDrawerModule] = useState<ModuleId | null>('context');
   const [isAIShowing, setIsAIShowing] = useState(false);
   const [interfaceMode, setInterfaceMode] = useState<'dev' | 'user'>('dev');
@@ -63,19 +69,23 @@ const App: React.FC = () => {
     { id: 'elements-view', title: '元素管理', type: 'folder' }
   ]);
   const [activeTabId, setActiveTabId] = useState<string | null>('elements-view');
+  const [refreshingTabId, setRefreshingTabId] = useState<string | null>(null);
   
+  // 状态提升：将常用项(Pinned Items)放在 App 层级管理
+  const [pinnedItems, setPinnedItems] = useState<any[]>([
+    { id: 'res_ux_1', name: '年度预算录入表', code: 'BUDGET_SHEET', type: 'spreadsheet', version: '1.0', createdBy: 'liuqing', updatedAt: '2025-05-10' },
+  ]);
+
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
+  // 空间工作台确认弹窗状态
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
   const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
 
-  const startResizing = useCallback(() => {
-    setIsResizing(true);
-  }, []);
-
-  const stopResizing = useCallback(() => {
-    setIsResizing(false);
-  }, []);
+  const startResizing = useCallback(() => setIsResizing(true), []);
+  const stopResizing = useCallback(() => setIsResizing(false), []);
 
   const resize = useCallback((e: MouseEvent) => {
     if (isResizing) {
@@ -114,21 +124,18 @@ const App: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [contextMenu]);
 
-  const toggleSidebar = () => {
-    setSidebarWidth(isExpanded ? 64 : 200);
-  };
+  const toggleSidebar = () => setSidebarWidth(isExpanded ? 64 : 200);
 
   const openTab = useCallback((item: ResourceItem | { id: string, name: string, code?: string, type: any, moduleId?: ModuleId, updatedAt?: string }) => {
     setTabs(prevTabs => {
       const existing = prevTabs.find(t => t.id === item.id);
       if (!existing) {
-        const moduleId = 'moduleId' in item ? item.moduleId : undefined;
         return [...prevTabs, { 
           id: item.id, 
           title: item.name, 
           code: item.code, 
           type: item.type, 
-          moduleId,
+          moduleId: 'moduleId' in item ? item.moduleId : undefined,
           updatedAt: item.updatedAt
         }];
       }
@@ -153,6 +160,26 @@ const App: React.FC = () => {
     });
   }, [activeTabId]);
 
+  const handleRefreshTab = (id: string) => {
+    setRefreshingTabId(id);
+    setContextMenu(null);
+    setTimeout(() => setRefreshingTabId(null), 1000);
+  };
+
+  const handlePinTab = (id: string) => {
+    const tab = tabs.find(t => t.id === id);
+    if (tab && !pinnedItems.some(p => p.id === tab.id)) {
+      setPinnedItems(prev => [{
+        id: tab.id,
+        name: tab.title,
+        code: tab.code || '',
+        type: tab.type,
+        updatedAt: tab.updatedAt || new Date().toISOString()
+      }, ...prev]);
+    }
+    setContextMenu(null);
+  };
+
   const closeOtherTabs = (id: string) => {
     setTabs(prevTabs => prevTabs.filter(t => t.id === id));
     setActiveTabId(id);
@@ -172,6 +199,8 @@ const App: React.FC = () => {
     if (id === 'elements') {
       openTab({ id: 'elements-view', name: '元素管理', type: 'folder' });
       if (isExplorerHidden) setIsExplorerHidden(false);
+    } else if (id === 'settings-redirect') {
+      setShowSettingsModal(true);
     } else {
       setActiveModule(id as ModuleId);
       if (isExplorerHidden) setIsExplorerHidden(false);
@@ -230,7 +259,14 @@ const App: React.FC = () => {
                   : 'bg-transparent border-transparent text-slate-400 hover:text-slate-600'
               }`}
             >
-              <Files size={12} className={activeTabId === tab.id ? 'text-blue-600' : 'text-slate-400'} />
+              <div className="relative">
+                <Files size={12} className={activeTabId === tab.id ? 'text-blue-600' : 'text-slate-400'} />
+                {refreshingTabId === tab.id && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/80">
+                    <RefreshCw size={10} className="animate-spin text-blue-600" />
+                  </div>
+                )}
+              </div>
               <span className="max-w-[140px] truncate">{tab.title}</span>
               <button 
                 onClick={(e) => { e.stopPropagation(); closeTabAction(tab.id); }}
@@ -264,9 +300,7 @@ const App: React.FC = () => {
             activeModule={activeModule} 
             onModuleChange={handleSidebarModuleChange} 
             activeDrawerModule={activeDrawerModule}
-            onDrawerChange={(id) => {
-              setActiveDrawerModule(activeDrawerModule === id ? null : id);
-            }}
+            onDrawerChange={(id) => setActiveDrawerModule(activeDrawerModule === id ? null : id)}
             width={sidebarWidth}
             isExpanded={isExpanded}
             onToggleExpand={toggleSidebar}
@@ -290,6 +324,8 @@ const App: React.FC = () => {
                 activeDrawerType={activeDrawerModule}
                 onCloseContext={() => setActiveDrawerModule(null)}
                 onToggleCollapse={() => setIsExplorerHidden(true)}
+                pinnedItems={pinnedItems}
+                onUpdatePinned={setPinnedItems}
               />
             </div>
           </div>
@@ -311,6 +347,7 @@ const App: React.FC = () => {
               viewMode={ViewMode.EXPLORER} 
               activeTab={activeTab} 
               onOpenTab={openTab}
+              isRefreshing={refreshingTabId === activeTabId}
             />
           </div>
           {isAIShowing && (
@@ -324,27 +361,60 @@ const App: React.FC = () => {
       {contextMenu && (
         <div 
           ref={contextMenuRef}
-          className="fixed bg-white border border-slate-100 rounded-lg shadow-2xl z-[100] py-1 min-w-[160px] animate-in fade-in zoom-in duration-100 origin-top-left"
+          className="fixed bg-white border border-slate-100 rounded-lg shadow-2xl z-[100] py-1 min-w-[180px] animate-in fade-in zoom-in duration-100 origin-top-left"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
-          <button 
-            onClick={() => { closeTabAction(contextMenu.tabId); setContextMenu(null); }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            <X size={14} className="text-slate-400" /> 关闭标签页
+          <button onClick={() => handleRefreshTab(contextMenu.tabId)} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors">
+            <RefreshCw size={14} className="text-slate-400" /> 刷新
           </button>
           <button 
-            onClick={() => closeOtherTabs(contextMenu.tabId)}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors"
+            onClick={() => handlePinTab(contextMenu.tabId)} 
+            disabled={pinnedItems.some(p => p.id === contextMenu.tabId)}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
           >
-            <MinusCircle size={14} className="text-slate-400" /> 关闭其他标签页
+            <Pin size={14} className="text-slate-400 rotate-45" fill={pinnedItems.some(p => p.id === contextMenu.tabId) ? "currentColor" : "none"} /> 固定到常用
           </button>
-          <button 
-            onClick={() => closeRightTabs(contextMenu.tabId)}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            <ArrowRightCircle size={14} className="text-slate-400" /> 关闭右侧标签页
+          
+          <div className="h-[1px] bg-slate-100 my-1 mx-2" />
+          
+          <button onClick={() => { closeTabAction(contextMenu.tabId); setContextMenu(null); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors">
+            <X size={14} className="text-slate-400" /> 关闭
           </button>
+          <button onClick={() => closeRightTabs(contextMenu.tabId)} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors">
+            <ArrowRightCircle size={14} className="text-slate-400" /> 关闭右侧
+          </button>
+          <button onClick={() => closeOtherTabs(contextMenu.tabId)} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-slate-50 transition-colors">
+            <MinusCircle size={14} className="text-slate-400" /> 关闭其他
+          </button>
+        </div>
+      )}
+
+      {/* 空间工作台确认弹窗 */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-[360px] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div className="p-6">
+              <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle size={28} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">前往空间工作台</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">系统将为您打开新的页面并前往空间工作台进行高级配置，是否继续？</p>
+            </div>
+            <div className="p-4 bg-slate-50 flex gap-3 justify-end">
+              <button 
+                onClick={() => setShowSettingsModal(false)}
+                className="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors"
+              >
+                取消
+              </button>
+              <button 
+                onClick={() => { setShowSettingsModal(false); window.open('https://deepfos.com/workbench', '_blank'); }}
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 transition-all flex items-center gap-1.5"
+              >
+                前往 <ExternalLink size={14} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

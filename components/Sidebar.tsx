@@ -12,7 +12,8 @@ import {
   Database,
   Lock,
   Terminal,
-  Grid2X2
+  Grid2X2,
+  Settings
 } from 'lucide-react';
 import { ModuleId } from '../types';
 
@@ -44,21 +45,19 @@ const Sidebar: React.FC<SidebarProps> = ({
   onModeToggle
 }) => {
   
-  // 开发态核心目录（最近、全量）
   const devItems = [
     { id: 'recent_fav', icon: <History size={18} />, label: '最近打开' },
     { id: 'resources', icon: <Blocks size={18} />, label: '全量资源' },
   ] as const;
 
-  // 快速工具组
   const quickTools = [
     { id: 'console', icon: <Terminal size={18} />, label: '控制台', isDrawer: true },
     { id: 'context', icon: <Info size={18} />, label: '元素信息', isDrawer: true },
   ] as const;
 
-  // 底部辅助工具（元素管理换用 Grid2X2 图标，更贴合图片形状且区分于 Blocks）
   const bottomTools = [
     { id: 'elements', icon: <Grid2X2 size={18} />, label: '元素管理', isTab: true },
+    { id: 'settings-redirect', icon: <Settings size={18} />, label: '空间设置', isAction: true },
   ] as const;
 
   const userItems = [
@@ -113,16 +112,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 flex flex-col py-2 overflow-y-auto no-scrollbar gap-5">
         {interfaceMode === 'dev' ? (
           <>
-            {/* 工作台区（置顶） */}
             <div className="overflow-hidden">
               {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>工作台</div>}
               {renderNavItems(devItems, (id) => activeModule === id, onModuleChange)}
             </div>
 
-            {/* 分隔符 */}
             <div className="mx-3 h-[1px] bg-slate-100" />
 
-            {/* 快速工具区（置于工作台下方） */}
             <div className="overflow-hidden">
               {width > 120 && <div className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity" style={{ opacity: width > 160 ? 1 : 0 }}>快速工具</div>}
               {renderNavItems(quickTools, 
