@@ -24,7 +24,8 @@ import {
   Code2,
   PackageOpen,
   ChevronRight,
-  Loader2
+  Loader2,
+  Home
 } from 'lucide-react';
 import { ResourceItem, ViewMode, Tab } from '../types';
 
@@ -104,6 +105,13 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
       </div>
     );
   }
+
+  // 模拟路径数据
+  const breadcrumbPath = [
+    { id: 'root', name: '全量资源' },
+    { id: 'finance', name: '财务模块' },
+    { id: 'current', name: activeTab.title }
+  ];
 
   return (
     <div className="flex flex-col h-full bg-[#f9fafb] relative overflow-hidden">
@@ -217,7 +225,28 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
         </div>
 
         {/* Scrollable Table Area */}
-        <div className="flex-1 h-full overflow-auto p-6 no-scrollbar relative">
+        <div className="flex-1 h-full overflow-auto p-6 no-scrollbar relative flex flex-col">
+          {/* Breadcrumb Path - Added Here */}
+          <div className="flex items-center gap-1.5 mb-4 px-1 overflow-x-auto no-scrollbar shrink-0">
+            <button className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
+              <Home size={14} />
+            </button>
+            {breadcrumbPath.map((item, index) => (
+              <React.Fragment key={item.id}>
+                <ChevronRight size={12} className="text-slate-300 shrink-0" />
+                <button 
+                  className={`text-[12px] whitespace-nowrap px-1.5 py-0.5 rounded transition-colors ${
+                    index === breadcrumbPath.length - 1 
+                      ? 'text-slate-800 font-bold cursor-default' 
+                      : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
+                  }`}
+                >
+                  {item.name}
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
+
           {/* Refreshing Overlay */}
           {isRefreshing && (
             <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/40 backdrop-blur-[1px] transition-all">
@@ -228,7 +257,7 @@ const MainContent: React.FC<MainContentProps> = ({ data, viewMode, activeTab, on
             </div>
           )}
           
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm min-w-[800px]">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm min-w-[800px] shrink-0">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/50 border-b border-slate-100">
