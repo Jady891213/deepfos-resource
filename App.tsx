@@ -31,6 +31,12 @@ const INITIAL_DATA: ResourceItem[] = [
   },
   {
     id: 'f3', name: '对账核销模型-核心逻辑', code: 'MODEL_RECON', type: 'model', description: '核心清算与对账业务模型', version: '3.0', createdBy: 'liuqing', updatedAt: '2025-05-23 10:38:41',
+  },
+  {
+    id: 'f4', name: 'ERP 凭证同步脚本', code: 'SYNC_ERP_VOUCHER', type: 'script', description: 'Python 脚本，用于同步金蝶/用友凭证数据', version: '1.5', createdBy: 'admin', updatedAt: '2025-05-24 09:12:00'
+  },
+  {
+    id: 'f5', name: '管理会计分摊引擎', code: 'AC_ALLOC_ENGINE', type: 'accounting', description: '负责月度管理费用分摊计算', version: '2.0', createdBy: 'liuqing', updatedAt: '2025-05-25 14:00:00'
   }
 ];
 
@@ -41,7 +47,7 @@ interface ContextMenu {
 }
 
 const App: React.FC = () => {
-  const [activeModule, setActiveModule] = useState<ModuleId>('resources');
+  const [activeModule, setActiveModule] = useState<ModuleId>('recent_fav'); // 默认进入最近打开
   const [activeDrawerModule, setActiveDrawerModule] = useState<ModuleId | null>('context');
   const [isAIShowing, setIsAIShowing] = useState(false);
   const [interfaceMode, setInterfaceMode] = useState<'dev' | 'user'>('dev');
@@ -185,8 +191,7 @@ const App: React.FC = () => {
     setContextMenu({ x: e.clientX, y: e.clientY, tabId: id });
   };
 
-  const explorerWidth = isExplorerHidden ? 0 : 240;
-  const navContainerWidth = sidebarWidth + explorerWidth;
+  const navContainerWidth = sidebarWidth + (isExplorerHidden ? 0 : 240);
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-white selection:bg-blue-100 antialiased font-sans text-[13px]">
@@ -279,6 +284,8 @@ const App: React.FC = () => {
                 onSelectResource={(item) => openTab(item)}
                 isUserMode={interfaceMode === 'user'} 
                 activeTab={activeTab}
+                tabs={tabs}
+                onCloseTab={closeTabAction}
                 showContext={activeDrawerModule !== null}
                 activeDrawerType={activeDrawerModule}
                 onCloseContext={() => setActiveDrawerModule(null)}
