@@ -135,10 +135,11 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [groupsExpanded, setGroupsExpanded] = useState<Record<string, boolean>>({ recent: true, fav: true });
   const [showCode, setShowCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [contextHeight, setContextHeight] = useState(320);
+  
+  // 调高初始高度至 400
+  const [contextHeight, setContextHeight] = useState(400);
   const [isResizingContext, setIsResizingContext] = useState(false);
 
-  // 更多菜单与类型筛选状态
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [filterTypeLabel, setFilterTypeLabel] = useState('全量资源');
@@ -146,6 +147,35 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [historyItems, setHistoryItems] = useState<ResourceItem[]>(INITIAL_HISTORY_ITEMS);
   const [pinnedItems, setPinnedItems] = useState<ResourceItem[]>(INITIAL_FAVORITE_ITEMS);
   const prevTabsRef = useRef<Tab[]>(tabs);
+
+  // 响应式高度调整逻辑
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizingContext) return;
+      const explorerRect = document.querySelector('.explorer-container')?.getBoundingClientRect();
+      if (!explorerRect) return;
+      const newHeight = explorerRect.bottom - e.clientY;
+      // 限制最小和最大高度
+      setContextHeight(Math.max(120, Math.min(newHeight, 600)));
+    };
+
+    const handleMouseUp = () => setIsResizingContext(false);
+
+    if (isResizingContext) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizingContext]);
 
   useEffect(() => {
     const prevTabs = prevTabsRef.current;
@@ -213,7 +243,7 @@ const Explorer: React.FC<ExplorerProps> = ({
   const currentTree = useMemo(() => {
     let data = isUserMode ? (MODULE_DATA[activeModule] || []) : (MODULE_DATA[selectedModule] || MODULE_DATA['all'] || []);
     
-    // 1. 类型筛选逻辑
+    // 类型筛选逻辑实现
     if (filterTypeLabel !== '全量资源') {
       const typeMap: Record<string, ResourceType[]> = {
         '页面展现': ['ux', 'spreadsheet'],
@@ -221,14 +251,11 @@ const Explorer: React.FC<ExplorerProps> = ({
         '流程逻辑': ['logic', 'workflow', 'script']
       };
       const targetTypes = typeMap[filterTypeLabel] || [];
-      
       const filterItemRecursively = (items: ResourceItem[]): ResourceItem[] => {
         return items.reduce((acc, item) => {
           if (item.type === 'folder' && item.children) {
             const filteredChildren = filterItemRecursively(item.children);
-            if (filteredChildren.length > 0) {
-              acc.push({ ...item, children: filteredChildren });
-            }
+            if (filteredChildren.length > 0) acc.push({ ...item, children: filteredChildren });
           } else if (targetTypes.includes(item.type)) {
             acc.push(item);
           }
@@ -238,7 +265,6 @@ const Explorer: React.FC<ExplorerProps> = ({
       data = filterItemRecursively(data);
     }
 
-    // 2. 搜索逻辑
     if (!searchQuery) return data;
     const lowerQuery = searchQuery.toLowerCase();
     const searchRecursively = (items: ResourceItem[]): ResourceItem[] => {
@@ -246,12 +272,8 @@ const Explorer: React.FC<ExplorerProps> = ({
         const matches = item.name.toLowerCase().includes(lowerQuery) || (item.code && item.code.toLowerCase().includes(lowerQuery));
         if (item.type === 'folder' && item.children) {
           const filteredChildren = searchRecursively(item.children);
-          if (filteredChildren.length > 0 || matches) {
-            acc.push({ ...item, children: filteredChildren });
-          }
-        } else if (matches) {
-          acc.push(item);
-        }
+          if (filteredChildren.length > 0 || matches) acc.push({ ...item, children: filteredChildren });
+        } else if (matches) acc.push(item);
         return acc;
       }, [] as ResourceItem[]);
     };
@@ -271,14 +293,11 @@ const Explorer: React.FC<ExplorerProps> = ({
   };
 
   const locateActive = () => {
-    if (activeTab) {
-      console.log('Locating:', activeTab.id);
-    }
     setIsMoreMenuOpen(false);
   };
 
   return (
-    <div className="flex flex-col h-full bg-white select-none relative border-r border-slate-100">
+    <div className="flex flex-col h-full bg-white select-none relative border-r border-slate-100 explorer-container overflow-hidden">
       <div className="h-14 flex items-center px-4 justify-between border-b border-slate-100 bg-white shrink-0">
         <div className="flex items-center gap-2">
           <span className="font-bold text-slate-800 tracking-tight text-[13px] uppercase">
@@ -350,7 +369,6 @@ const Explorer: React.FC<ExplorerProps> = ({
               <div className="px-1">
                 <button onClick={() => toggleGroup('fav')} className="w-full flex items-center justify-between p-1.5 mb-1 text-slate-400 bg-slate-50/50 rounded hover:bg-slate-100/50 transition-colors">
                   <div className="flex items-center gap-2">
-                    {/* 修改为锚定图标 Pin */}
                     <Pin size={14} className="text-blue-600 rotate-45" fill="currentColor" />
                     <span className="text-[11px] font-black uppercase tracking-widest">常用</span>
                   </div>
@@ -360,12 +378,13 @@ const Explorer: React.FC<ExplorerProps> = ({
                   <div className="space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
                     {filteredPinned.length > 0 ? filteredPinned.map(item => {
                       const isOpen = tabs.some(t => t.id === item.id);
-                      const isActive = activeTab?.id === item.id;
                       return (
-                        <div key={item.id} onClick={() => onSelectResource(item)} className={`flex items-center gap-2 p-1.5 rounded cursor-pointer group transition-all ${isActive ? 'bg-blue-600/5 shadow-inner' : 'hover:bg-blue-50/50'}`}>
+                        <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer group transition-all hover:bg-blue-50/50">
                           {getIconForType(item.type)}
-                          <span className={`text-[12px] truncate flex-1 transition-all ${isActive ? 'text-blue-600 font-bold' : (isOpen ? 'text-slate-700' : 'text-slate-500')}`}>{showCode ? item.code : item.name}</span>
-                          {isOpen && !isActive && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full opacity-50"></div>}
+                          <span className={`text-[12px] truncate flex-1 transition-all ${isOpen ? 'text-slate-700 font-medium' : 'text-slate-500'}`}>
+                            {showCode ? item.code : item.name}
+                          </span>
+                          {isOpen && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full opacity-60"></div>}
                           <button className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded" onClick={(e) => { e.stopPropagation(); handleUnpin(item.id); }}><PinOff size={12} /></button>
                         </div>
                       );
@@ -381,7 +400,6 @@ const Explorer: React.FC<ExplorerProps> = ({
                 </button>
                 {groupsExpanded.recent && (
                   <div className="space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                    {/* A. 正在打开的 Tab */}
                     {activeOpenedTabs.map(item => {
                       const isPinned = pinnedItems.some(p => p.id === item.id);
                       return (
@@ -390,10 +408,7 @@ const Explorer: React.FC<ExplorerProps> = ({
                           <span className={`text-[12px] truncate flex-1 transition-all ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-700 font-medium'}`}>{showCode ? (item.code || item.title) : item.title}</span>
                           <div className="flex items-center">
                             {/* 增加固定到常用按钮 */}
-                            <button 
-                              className={`p-1 rounded transition-all ${isPinned ? 'text-blue-600 opacity-40' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`} 
-                              onClick={(e) => { e.stopPropagation(); if (!isPinned) handlePin(item); }}
-                            >
+                            <button className={`p-1 rounded transition-all ${isPinned ? 'text-blue-600 opacity-40 cursor-default' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`} onClick={(e) => { e.stopPropagation(); if (!isPinned) handlePin(item); }}>
                               <Pin size={12} fill={isPinned ? "currentColor" : "none"} />
                             </button>
                             <button onClick={(e) => { e.stopPropagation(); onCloseTab(item.id); }} className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-rose-500 rounded hover:bg-rose-50 transition-all"><X size={12} /></button>
@@ -404,7 +419,6 @@ const Explorer: React.FC<ExplorerProps> = ({
                     {(activeOpenedTabs.length > 0 && filteredHistory.length > 0) && (
                       <div className="flex items-center gap-2 py-2 px-1 opacity-40"><div className="flex-1 h-[1px] bg-slate-200"></div><span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">最近关闭</span><div className="flex-1 h-[1px] bg-slate-200"></div></div>
                     )}
-                    {/* B. 历史记录 */}
                     {filteredHistory.map(item => {
                       const isPinned = pinnedItems.some(p => p.id === item.id);
                       return (
@@ -440,6 +454,7 @@ const Explorer: React.FC<ExplorerProps> = ({
       </div>
 
       <div style={{ height: showContext ? `${contextHeight}px` : '0px', opacity: showContext ? 1 : 0 }} className="border-t border-slate-200 bg-slate-50/80 flex flex-col shrink-0 relative transition-all duration-300 ease-in-out overflow-hidden z-10">
+        {/* 顶部缩放热区 */}
         <div onMouseDown={() => setIsResizingContext(true)} className="absolute top-0 left-0 w-full h-1 cursor-row-resize hover:bg-blue-400/30 z-50 active:bg-blue-500" />
         <div className="h-9 flex items-center px-3 justify-between border-b border-slate-200 bg-white">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -464,6 +479,7 @@ const Explorer: React.FC<ExplorerProps> = ({
                 <div className="text-[10px] text-slate-400 font-mono bg-slate-50 px-1.5 py-0.5 rounded inline-block">{activeTab.code}</div>
               </div>
               
+              {/* 权限 & 版本 置顶显示 */}
               <section className="space-y-1.5">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={11} className="text-blue-600" /> 权限 & 版本</h4>
                 <div className="bg-white border border-slate-100 rounded-lg p-2 text-[11px] space-y-1.5">
@@ -476,14 +492,11 @@ const Explorer: React.FC<ExplorerProps> = ({
               <section className="space-y-2">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Link size={11} className="text-blue-600" /> 关联元素 (Depends On)</h4>
                 <div className="space-y-1.5">
-                  {[
-                    { id: 'dep_1', name: 'BUDGET_DIM_01', type: 'model' as ResourceType },
-                    { id: 'dep_2', name: 'USER_MAPPING_SCRIPT', type: 'logic' as ResourceType }
-                  ].map(item => (
+                  {[{ id: 'dep_1', name: 'BUDGET_DIM_01', type: 'model' as ResourceType }, { id: 'dep_2', name: 'USER_MAPPING_SCRIPT', type: 'logic' as ResourceType }].map(item => (
                     <div key={item.id} className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded text-[11px] text-slate-600 group/item hover:border-blue-200 transition-all">
                       {getIconForType(item.type)}
                       <span className="flex-1 truncate group-hover/item:text-blue-600">{item.name}</span>
-                      <button onClick={() => onSelectResource(item)} className="p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded" title="跳转"><ExternalLink size={12} /></button>
+                      <button onClick={() => onSelectResource(item)} className="p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded" title="查看详情"><ExternalLink size={12} /></button>
                     </div>
                   ))}
                 </div>
@@ -495,7 +508,7 @@ const Explorer: React.FC<ExplorerProps> = ({
                   <div className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded text-[11px] text-slate-600 group/item hover:border-blue-200 transition-all">
                     <Layout size={12} className="text-blue-500" />
                     <span className="flex-1 truncate group-hover/item:text-blue-600">FIN_MAIN_DASHBOARD</span>
-                    <button onClick={() => onSelectResource({ id: 'ref_1', name: 'FIN_MAIN_DASHBOARD', type: 'ux' })} className="p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded" title="跳转"><ExternalLink size={12} /></button>
+                    <button onClick={() => onSelectResource({ id: 'ref_1', name: 'FIN_MAIN_DASHBOARD', type: 'ux' })} className="p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded" title="查看详情"><ExternalLink size={12} /></button>
                   </div>
                 </div>
               </section>
