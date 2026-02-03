@@ -34,7 +34,9 @@ import {
   Lock,
   PieChart,
   Terminal,
-  Info
+  Info,
+  Pin,
+  PinOff
 } from 'lucide-react';
 import { ModuleId, ResourceItem, Tab, ResourceType } from '../types';
 
@@ -117,12 +119,12 @@ const CONSOLE_ITEMS = [
   { id: 'console-workflow-monitor', name: '工作流监控', icon: <Activity size={14} className="text-purple-500" /> },
 ];
 
-const RECENT_ITEMS: ResourceItem[] = [
+const INITIAL_RECENT_ITEMS: ResourceItem[] = [
   { id: 'res_m_1', name: '对账核销核心模型', code: 'MODEL_RECON_CORE', type: 'model', version: '3.0', createdBy: 'liuqing', updatedAt: '2025-05-14' },
   { id: 'res_ux_3', name: '财务看板-主视图', code: 'FIN_DASHBOARD', type: 'ux', version: '1.0', createdBy: 'liuqing', updatedAt: '2025-05-12' },
 ];
 
-const FAVORITE_ITEMS: ResourceItem[] = [
+const INITIAL_FAVORITE_ITEMS: ResourceItem[] = [
   { id: 'res_ux_1', name: '年度预算录入表', code: 'BUDGET_SHEET', type: 'spreadsheet', version: '1.0', createdBy: 'liuqing', updatedAt: '2025-05-10' },
 ];
 
@@ -170,6 +172,10 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [contextHeight, setContextHeight] = useState(320);
   const [isResizingContext, setIsResizingContext] = useState(false);
+
+  // 动态数据状态
+  const [recentItems, setRecentItems] = useState<ResourceItem[]>(INITIAL_RECENT_ITEMS);
+  const [pinnedItems, setPinnedItems] = useState<ResourceItem[]>(INITIAL_FAVORITE_ITEMS);
 
   const [lockedDrawerType, setLockedDrawerType] = useState<ModuleId | null>(activeDrawerType || null);
 
@@ -243,16 +249,16 @@ const Explorer: React.FC<ExplorerProps> = ({
   }, [selectedModule, activeModule, searchQuery, isUserMode]);
 
   const filteredRecent = useMemo(() => {
-    if (!searchQuery) return RECENT_ITEMS;
+    if (!searchQuery) return recentItems;
     const q = searchQuery.toLowerCase();
-    return RECENT_ITEMS.filter(item => item.name.toLowerCase().includes(q) || item.code.toLowerCase().includes(q));
-  }, [searchQuery]);
+    return recentItems.filter(item => item.name.toLowerCase().includes(q) || item.code.toLowerCase().includes(q));
+  }, [searchQuery, recentItems]);
 
   const filteredFav = useMemo(() => {
-    if (!searchQuery) return FAVORITE_ITEMS;
+    if (!searchQuery) return pinnedItems;
     const q = searchQuery.toLowerCase();
-    return FAVORITE_ITEMS.filter(item => item.name.toLowerCase().includes(q) || item.code.toLowerCase().includes(q));
-  }, [searchQuery]);
+    return pinnedItems.filter(item => item.name.toLowerCase().includes(q) || item.code.toLowerCase().includes(q));
+  }, [searchQuery, pinnedItems]);
 
   const currentModuleLabel = useMemo(() => {
     if (isUserMode) {
@@ -266,12 +272,25 @@ const Explorer: React.FC<ExplorerProps> = ({
     return (MODULE_OPTIONS.find(o => o.id === selectedModule) || MODULE_OPTIONS[0]).label;
   }, [selectedModule, isUserMode, activeModule]);
 
+  // 固定操作实现
+  const handlePin = useCallback((item: ResourceItem) => {
+    setPinnedItems(prev => {
+      if (prev.some(i => i.id === item.id)) return prev;
+      return [item, ...prev];
+    });
+  }, []);
+
+  // 取消固定操作实现
+  const handleUnpin = useCallback((itemId: string) => {
+    setPinnedItems(prev => prev.filter(i => i.id !== itemId));
+  }, []);
+
   return (
     <div className="flex flex-col h-full bg-white select-none relative border-r border-slate-100">
       <div className="h-14 flex items-center px-4 justify-between border-b border-slate-100 bg-white shrink-0">
         <div className="flex items-center gap-2">
           <span className="font-bold text-slate-800 tracking-tight text-[13px] uppercase">
-            {activeModule === 'recent_fav' ? '最近与收藏' : (isUserMode ? currentModuleLabel : '资源管理')}
+            {activeModule === 'recent_fav' ? '最近打开' : (isUserMode ? currentModuleLabel : '资源管理')}
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -379,6 +398,41 @@ const Explorer: React.FC<ExplorerProps> = ({
         <div className="flex-1 overflow-y-auto px-1 no-scrollbar pb-10">
           {activeModule === 'recent_fav' ? (
             <div className="space-y-4 pt-1">
+              {/* 常用项目 - 放在上方 */}
+              <div className="px-1">
+                <button 
+                  onClick={() => toggleGroup('fav')}
+                  className="w-full flex items-center justify-between p-1.5 mb-1 text-slate-400 bg-slate-50/50 rounded hover:bg-slate-100/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Pin size={14} className="text-blue-600" />
+                    <span className="text-[11px] font-black uppercase tracking-widest">常用</span>
+                  </div>
+                  {groupsExpanded.fav ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                </button>
+
+                {groupsExpanded.fav && (
+                  <div className="space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {filteredFav.length > 0 ? filteredFav.map(item => (
+                      <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer hover:bg-blue-50/50 transition-colors group">
+                        {getIconForType(item.type)}
+                        <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
+                          {showCode ? item.code : item.name}
+                        </span>
+                        <button 
+                          className="opacity-0 group-hover:opacity-100 p-1 text-blue-600 hover:bg-blue-100 rounded transition-all"
+                          onClick={(e) => { e.stopPropagation(); handleUnpin(item.id); }}
+                          title="取消固定"
+                        >
+                          <PinOff size={12} />
+                        </button>
+                      </div>
+                    )) : <div className="p-3 text-[11px] text-slate-400 text-center italic">无匹配常用项</div>}
+                  </div>
+                )}
+              </div>
+
+              {/* 最近打开 - 放在下方 */}
               <div className="px-1">
                 <button 
                   onClick={() => toggleGroup('recent')}
@@ -393,47 +447,24 @@ const Explorer: React.FC<ExplorerProps> = ({
                 
                 {groupsExpanded.recent && (
                   <div className="space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                    {filteredRecent.length > 0 ? filteredRecent.map(item => (
-                      <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer hover:bg-blue-50/50 transition-colors">
-                        {getIconForType(item.type)}
-                        <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
-                          {showCode ? item.code : item.name}
-                        </span>
-                      </div>
-                    )) : <div className="p-3 text-[11px] text-slate-400 text-center italic">无匹配记录</div>}
-                  </div>
-                )}
-              </div>
-              
-              <div className="px-1">
-                <button 
-                  onClick={() => toggleGroup('fav')}
-                  className="w-full flex items-center justify-between p-1.5 mb-1 text-slate-400 bg-slate-50/50 rounded hover:bg-slate-100/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Star size={14} className="text-amber-400" />
-                    <span className="text-[11px] font-black uppercase tracking-widest">我的收藏</span>
-                  </div>
-                  {groupsExpanded.fav ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                </button>
-
-                {groupsExpanded.fav && (
-                  <div className="space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                    {filteredFav.length > 0 ? filteredFav.map(item => (
-                      <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer hover:bg-blue-50/50 transition-colors group">
-                        {getIconForType(item.type)}
-                        <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
-                          {showCode ? item.code : item.name}
-                        </span>
-                        <button 
-                          className="opacity-0 group-hover:opacity-100 p-1 text-amber-400 hover:text-slate-400 transition-all"
-                          onClick={(e) => { e.stopPropagation(); /* 触发取消收藏逻辑 */ }}
-                          title="取消收藏"
-                        >
-                          <Star size={12} fill="currentColor" />
-                        </button>
-                      </div>
-                    )) : <div className="p-3 text-[11px] text-slate-400 text-center italic">无匹配收藏</div>}
+                    {filteredRecent.length > 0 ? filteredRecent.map(item => {
+                      const isPinned = pinnedItems.some(p => p.id === item.id);
+                      return (
+                        <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer hover:bg-blue-50/50 transition-colors group">
+                          {getIconForType(item.type)}
+                          <span className={`text-[12px] truncate flex-1 ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
+                            {showCode ? item.code : item.name}
+                          </span>
+                          <button 
+                            className={`p-1 rounded transition-all ${isPinned ? 'text-blue-600 cursor-default opacity-50' : 'opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                            onClick={(e) => { e.stopPropagation(); if (!isPinned) handlePin(item); }}
+                            title={isPinned ? "已固定" : "固定到常用"}
+                          >
+                            <Pin size={12} fill={isPinned ? "currentColor" : "none"} />
+                          </button>
+                        </div>
+                      );
+                    }) : <div className="p-3 text-[11px] text-slate-400 text-center italic">无匹配记录</div>}
                   </div>
                 )}
               </div>

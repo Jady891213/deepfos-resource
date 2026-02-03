@@ -46,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   // 开发态核心目录（最近、全量）
   const devItems = [
-    { id: 'recent_fav', icon: <History size={18} />, label: '最近与收藏' },
+    { id: 'recent_fav', icon: <History size={18} />, label: '最近打开' },
     { id: 'resources', icon: <Blocks size={18} />, label: '全量资源' },
   ] as const;
 
