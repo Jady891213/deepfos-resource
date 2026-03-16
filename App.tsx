@@ -27,6 +27,7 @@ import Sidebar from './components/Sidebar';
 import Explorer from './components/Explorer';
 import MainContent from './components/MainContent';
 import AIAssistant from './components/AIAssistant';
+import SystemTour from './components/SystemTour';
 
 const INITIAL_DATA: ResourceItem[] = [
   {
@@ -199,6 +200,9 @@ const App: React.FC = () => {
     if (id === 'elements') {
       openTab({ id: 'elements-view', name: '元素管理', type: 'folder' });
       if (isExplorerHidden) setIsExplorerHidden(false);
+    } else if (id === 'system-tour') {
+      openTab({ id: 'system-tour', name: '系统导览', type: 'page' });
+      if (!isExplorerHidden) setIsExplorerHidden(true);
     } else if (id === 'settings-redirect') {
       setShowSettingsModal(true);
     } else {
@@ -235,8 +239,10 @@ const App: React.FC = () => {
           </button>
           
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-sm shrink-0">
-              <Layers size={18} strokeWidth={2.5} />
+            <div className="flex items-center justify-center rounded-lg bg-[#9369E6] shrink-0 size-8 shadow-sm">
+              <div className="text-[14px] inline-block text-white font-['Inter',system-ui,sans-serif] font-bold leading-[18px]">
+                D
+              </div>
             </div>
             <div className="whitespace-nowrap overflow-hidden flex flex-col leading-none">
               <span className="font-black text-slate-800 tracking-tight text-[15px]">DeepFOS</span>
@@ -341,14 +347,18 @@ const App: React.FC = () => {
               <PanelLeft size={16} />
             </button>
           )}
-          <div className="flex-1 overflow-hidden">
-            <MainContent 
-              data={INITIAL_DATA} 
-              viewMode={ViewMode.EXPLORER} 
-              activeTab={activeTab} 
-              onOpenTab={openTab}
-              isRefreshing={refreshingTabId === activeTabId}
-            />
+          <div className="flex-1 overflow-hidden relative">
+            {activeTab?.id === 'system-tour' ? (
+              <SystemTour />
+            ) : (
+              <MainContent 
+                data={INITIAL_DATA} 
+                viewMode={ViewMode.EXPLORER} 
+                activeTab={activeTab} 
+                onOpenTab={openTab}
+                isRefreshing={refreshingTabId === activeTabId}
+              />
+            )}
           </div>
           {isAIShowing && (
             <div className="w-80 border-l border-slate-200 bg-white shrink-0 animate-in slide-in-from-right duration-300 z-40 shadow-xl">

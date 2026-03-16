@@ -17,6 +17,7 @@ import {
   ArrowRightLeft,
   X,
   ClipboardList,
+  Map
 } from "lucide-react";
 import { ModuleId } from "../types";
 
@@ -102,6 +103,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   ] as const;
 
   const bottomTools = [
+    {
+      id: "system-tour",
+      icon: <Map size={18} />,
+      label: "系统导览",
+      isTab: true,
+    },
     {
       id: "elements",
       icon: <Grid2X2 size={18} />,
