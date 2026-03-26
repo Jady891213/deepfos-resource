@@ -52,7 +52,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onClose }) => {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-blue-600 text-white">
+      <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-primary text-white">
         <div className="flex items-center gap-2 font-semibold">
           <BrainCircuit size={18} />
           <span>AI Copilot</span>
@@ -67,7 +67,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onClose }) => {
           <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[90%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
               m.role === 'user' 
-                ? 'bg-blue-600 text-white rounded-tr-none' 
+                ? 'bg-primary text-white rounded-tr-none' 
                 : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none'
             }`}>
               {m.text}
@@ -92,12 +92,12 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onClose }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
             placeholder="Ask Copilot..."
-            className="w-full border border-slate-200 rounded-xl py-3 pl-4 pr-12 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none min-h-[80px] transition-all"
+            className="w-full border border-slate-200 rounded-xl py-3 pl-4 pr-12 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none min-h-[80px] transition-all"
           />
           <button 
             onClick={handleSend}
             disabled={!input.trim() || isTyping}
-            className="absolute right-3 bottom-3 p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:bg-slate-300"
+            className="absolute right-3 bottom-3 p-1.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:bg-slate-300"
           >
             <Send size={16} />
           </button>

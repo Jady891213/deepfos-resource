@@ -1,0 +1,111 @@
+/*
+ * DeepFOS Design System for v0
+ * 基于先胜云平台实际设计令牌生成
+ * 主色: #9369e6 (紫) | 侧边栏: 浅色 | 基础字号: 12px
+ */
+
+:root {
+  --radius: 0.375rem;
+
+  /* 页面背景 — #f7f8fa 浅灰蓝底 */
+  --background: oklch(0.9780 0.0020 265);
+  /* 主文字色 — #1d2129 深蓝灰 */
+  --foreground: oklch(0.2050 0.0100 260);
+
+  /* 卡片 — #ffffff 纯白 */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2050 0.0100 260);
+
+  /* 弹出层 — #ffffff */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2050 0.0100 260);
+
+  /* 主色 — #9369e6 紫 */
+  --primary: oklch(0.5700 0.2000 295);
+  --primary-foreground: oklch(0.9850 0 0);
+
+  /* 辅助色 — #f0f2f5 浅灰底 + #4e5969 中灰文字 */
+  --secondary: oklch(0.9550 0.0050 265);
+  --secondary-foreground: oklch(0.4500 0.0200 250);
+
+  /* 静默色 — #f0f2f5 + #86909c */
+  --muted: oklch(0.9550 0.0050 265);
+  --muted-foreground: oklch(0.6350 0.0180 250);
+
+  /* 强调色 — 浅紫底 #f3eeff + 紫文字 */
+  --accent: oklch(0.9550 0.0250 295);
+  --accent-foreground: oklch(0.2050 0.0100 260);
+
+  /* 危险色 — #f44336 红 */
+  --destructive: oklch(0.5770 0.2450 27.3);
+  --destructive-foreground: oklch(0.9850 0 0);
+
+  /* 边框 — #e8eaed */
+  --border: oklch(0.9300 0.0050 260);
+  /* 输入框边框 — #dcdcdc */
+  --input: oklch(0.8900 0 0);
+  /* 焦点环 — 跟随主色 */
+  --ring: oklch(0.5700 0.2000 295);
+
+  /* 图表色板 */
+  --chart-1: oklch(0.5700 0.2000 295);
+  --chart-2: oklch(0.6500 0.1700 145);
+  --chart-3: oklch(0.7500 0.1700 75);
+  --chart-4: oklch(0.5300 0.2700 271);
+  --chart-5: oklch(0.5770 0.2450 27.3);
+
+  /* 侧边栏 — 浅色风格 */
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.4500 0.0200 250);
+  --sidebar-primary: oklch(0.5700 0.2000 295);
+  --sidebar-primary-foreground: oklch(0.9850 0 0);
+  --sidebar-accent: oklch(0.9550 0.0250 295);
+  --sidebar-accent-foreground: oklch(0.2050 0.0100 260);
+  --sidebar-border: oklch(0.9300 0.0050 260);
+  --sidebar-ring: oklch(0.5700 0.2000 295);
+}
+
+.dark {
+  --background: oklch(0.1500 0.0150 290);
+  --foreground: oklch(0.9200 0.0050 265);
+
+  --card: oklch(0.1800 0.0150 290);
+  --card-foreground: oklch(0.9200 0.0050 265);
+
+  --popover: oklch(0.1800 0.0150 290);
+  --popover-foreground: oklch(0.9200 0.0050 265);
+
+  --primary: oklch(0.6200 0.1900 295);
+  --primary-foreground: oklch(0.1500 0.0150 290);
+
+  --secondary: oklch(0.2500 0.0150 290);
+  --secondary-foreground: oklch(0.8500 0.0100 265);
+
+  --muted: oklch(0.2500 0.0150 290);
+  --muted-foreground: oklch(0.6350 0.0200 260);
+
+  --accent: oklch(0.2800 0.0300 295);
+  --accent-foreground: oklch(0.9200 0.0050 265);
+
+  --destructive: oklch(0.5500 0.2200 27.3);
+  --destructive-foreground: oklch(0.9200 0.0050 265);
+
+  --border: oklch(0.3000 0.0150 290);
+  --input: oklch(0.3000 0.0150 290);
+  --ring: oklch(0.6200 0.1900 295);
+
+  --chart-1: oklch(0.6200 0.1900 295);
+  --chart-2: oklch(0.7000 0.1700 145);
+  --chart-3: oklch(0.7800 0.1500 75);
+  --chart-4: oklch(0.5800 0.2500 271);
+  --chart-5: oklch(0.6000 0.2200 27.3);
+
+  --sidebar: oklch(0.1800 0.0150 290);
+  --sidebar-foreground: oklch(0.9200 0.0050 265);
+  --sidebar-primary: oklch(0.6200 0.1900 295);
+  --sidebar-primary-foreground: oklch(0.1500 0.0150 290);
+  --sidebar-accent: oklch(0.2500 0.0200 295);
+  --sidebar-accent-foreground: oklch(0.9200 0.0050 265);
+  --sidebar-border: oklch(0.2500 0.0150 290);
+  --sidebar-ring: oklch(0.6200 0.1900 295);
+}

@@ -227,26 +227,26 @@ const App: React.FC = () => {
   const navContainerWidth = sidebarWidth + (isExplorerHidden ? 0 : 240);
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-white selection:bg-blue-100 antialiased font-sans text-[13px]">
-      <header className="h-14 flex items-center border-b border-slate-200 bg-white shrink-0 z-30">
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-white selection:bg-primary/20 antialiased font-sans text-[12px]">
+      <header className="h-14 flex items-center border-b border-slate-200 bg-slate-100 shrink-0 z-30">
         <div className="flex items-center px-4 h-full shrink-0">
           <button 
             onClick={() => setIsNavHidden(!isNavHidden)}
-            className={`p-1.5 rounded-lg transition-all mr-4 ${isNavHidden ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
+            className={`p-1.5 rounded-lg transition-all mr-4 ${isNavHidden ? 'text-primary bg-primary/10' : 'text-slate-400 hover:text-primary hover:bg-primary/10'}`}
             title={isNavHidden ? "展开导航" : "收起导航"}
           >
             {isNavHidden ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
           </button>
           
           <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center rounded-lg bg-[#9369E6] shrink-0 size-8 shadow-sm">
-              <div className="text-[14px] inline-block text-white font-['Inter',system-ui,sans-serif] font-bold leading-[18px]">
+            <div className="flex items-center justify-center rounded-lg bg-primary shrink-0 size-8 shadow-sm">
+              <div className="text-[14px] inline-block text-white font-bold leading-[18px]">
                 D
               </div>
             </div>
             <div className="whitespace-nowrap overflow-hidden flex flex-col leading-none">
-              <span className="font-black text-slate-800 tracking-tight text-[15px]">DeepFOS</span>
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Intelligence Platform</span>
+              <span className="font-bold text-slate-800 tracking-tight text-[14px]">DeepFOS</span>
+              <span className="text-[10px] text-slate-500 font-medium uppercase tracking-widest mt-0.5">Intelligence Platform</span>
             </div>
           </div>
         </div>
@@ -261,15 +261,15 @@ const App: React.FC = () => {
               onContextMenu={(e) => handleTabContextMenu(e, tab.id)}
               className={`group h-[38px] flex items-center px-4 gap-2 text-[12px] font-medium cursor-pointer transition-all border-t-2 rounded-t-lg shrink-0 select-none ${
                 activeTabId === tab.id 
-                  ? 'bg-white border-blue-600 text-blue-700 shadow-[0_-2px_6px_rgba(0,0,0,0.02)]' 
-                  : 'bg-transparent border-transparent text-slate-400 hover:text-slate-600'
+                  ? 'bg-white border-primary text-primary shadow-sm' 
+                  : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200'
               }`}
             >
               <div className="relative">
-                <Files size={12} className={activeTabId === tab.id ? 'text-blue-600' : 'text-slate-400'} />
+                <Files size={12} className={activeTabId === tab.id ? 'text-primary' : 'text-slate-400'} />
                 {refreshingTabId === tab.id && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/80">
-                    <RefreshCw size={10} className="animate-spin text-blue-600" />
+                    <RefreshCw size={10} className="animate-spin text-primary" />
                   </div>
                 )}
               </div>
@@ -284,12 +284,12 @@ const App: React.FC = () => {
           ))}
         </div>
 
-        <div className="flex items-center gap-4 px-5 border-l border-slate-100 h-full shrink-0">
-          <button onClick={() => setIsAIShowing(!isAIShowing)} className={`p-1.5 rounded-lg transition-colors ${isAIShowing ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-100'}`}>
+        <div className="flex items-center gap-4 px-5 border-l border-slate-200 h-full shrink-0">
+          <button onClick={() => setIsAIShowing(!isAIShowing)} className={`p-1.5 rounded-lg transition-colors ${isAIShowing ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-200'}`}>
             <Sparkles size={18} />
           </button>
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-100 ml-1">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[12px] font-bold border-2 border-white shadow-sm">LQ</div>
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-200 ml-1">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-[12px] font-bold border-2 border-white shadow-sm">LQ</div>
           </div>
         </div>
       </header>
@@ -337,11 +337,11 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <main className="flex-1 flex flex-row overflow-hidden relative bg-[#f8fafc] z-10">
+        <main className="flex-1 flex flex-row overflow-hidden relative bg-slate-50 z-10">
           {isExplorerHidden && !isNavHidden && (
             <button 
               onClick={() => setIsExplorerHidden(false)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 p-1.5 bg-white border border-slate-200 border-l-0 rounded-r-lg text-slate-400 hover:text-blue-600 shadow-md z-50 animate-in slide-in-from-left duration-200"
+              className="absolute left-0 top-1/2 -translate-y-1/2 p-1.5 bg-white border border-slate-200 border-l-0 rounded-r-lg text-slate-400 hover:text-primary shadow-md z-50 animate-in slide-in-from-left duration-200"
               title="展开目录栏"
             >
               <PanelLeft size={16} />
@@ -419,7 +419,7 @@ const App: React.FC = () => {
               </button>
               <button 
                 onClick={() => { setShowSettingsModal(false); window.open('https://deepfos.com/workbench', '_blank'); }}
-                className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 transition-all flex items-center gap-1.5"
+                className="px-6 py-2 bg-primary text-white rounded-xl text-sm font-bold shadow-md hover:bg-primary-hover transition-all flex items-center gap-1.5"
               >
                 前往 <ExternalLink size={14} />
               </button>

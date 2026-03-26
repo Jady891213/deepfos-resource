@@ -125,14 +125,14 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const userItems = [
     {
-      id: "finance_center",
+      id: "salary_budget",
       icon: <MonitorCheck size={18} />,
-      label: "财务中心",
+      label: "薪酬预算",
     },
     {
       id: "finance_master_data",
       icon: <Database size={18} />,
-      label: "财务主数据",
+      label: "财务数据",
     },
     { id: "closing_management", icon: <Lock size={18} />, label: "关账管理" },
   ] as const;
@@ -147,11 +147,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         <button
           key={item.id}
           onClick={() => clickHandler(item.id)}
-          className={`flex items-center rounded-lg transition-colors group relative min-h-[36px] ${
+          className={`flex rounded-lg transition-colors group relative min-h-[36px] ${
             isActive(item.id)
-              ? "bg-blue-50 text-blue-600 font-bold shadow-sm"
-              : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-          } ${isExpanded ? "px-3 py-1.5 w-full" : "p-2 justify-center"}`}
+              ? "bg-primary/10 text-primary font-bold shadow-sm"
+              : "text-slate-500 hover:bg-black/5 hover:text-slate-700"
+          } ${isExpanded ? "flex-row items-center px-3 py-1.5 w-full" : "flex-col items-center justify-center py-2 w-full gap-1"}`}
           title={!isExpanded ? item.label : undefined}
         >
           <span
@@ -159,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           >
             {item.icon}
           </span>
-          {width > 120 && (
+          {isExpanded ? (
             <span
               className="ml-3 text-[12px] whitespace-nowrap overflow-hidden transition-all duration-300"
               style={{
@@ -167,6 +167,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                 width: width > 160 ? "auto" : 0,
               }}
             >
+              {item.label}
+            </span>
+          ) : (
+            <span className="text-[10px] leading-none whitespace-nowrap scale-90">
               {item.label}
             </span>
           )}
@@ -182,7 +186,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     >
       <div
         onMouseDown={onResizeStart}
-        className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-blue-400/30 active:bg-blue-500/50 transition-colors z-50"
+        className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-50"
       />
 
       <div className="flex-1 flex flex-col py-2 overflow-y-auto no-scrollbar gap-5">
@@ -259,17 +263,21 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="mt-auto px-2 flex flex-col gap-0.5">
               <button
                 onClick={() => setShowSearchModal(true)}
-                className={`flex items-center rounded-lg transition-colors group relative min-h-[36px] text-slate-500 hover:bg-slate-100 hover:text-slate-700 ${isExpanded ? "px-3 py-1.5 w-full" : "p-2 justify-center"}`}
+                className={`flex rounded-lg transition-colors group relative min-h-[36px] text-slate-500 hover:bg-slate-100 hover:text-slate-700 ${isExpanded ? "flex-row items-center px-3 py-1.5 w-full" : "flex-col items-center justify-center py-2 w-full gap-1"}`}
                 title="搜索"
               >
                 <span className="scale-100 transition-transform shrink-0">
                   <Search size={18} />
                 </span>
-                {width > 120 && (
+                {isExpanded ? (
                   <span
                     className="ml-3 text-[12px] whitespace-nowrap overflow-hidden transition-all duration-300"
                     style={{ opacity: width > 160 ? 1 : 0, width: width > 160 ? "auto" : 0 }}
                   >
+                    搜索
+                  </span>
+                ) : (
+                  <span className="text-[10px] leading-none whitespace-nowrap scale-90">
                     搜索
                   </span>
                 )}
@@ -278,17 +286,21 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="mt-auto px-2 flex flex-col gap-0.5">
                 <button
                   onClick={handleSwitchClick}
-                  className={`flex items-center rounded-lg transition-colors group relative min-h-[36px] text-slate-500 hover:bg-slate-100 hover:text-slate-700 ${isExpanded ? "px-3 py-1.5 w-full" : "p-2 justify-center"}`}
+                  className={`flex rounded-lg transition-colors group relative min-h-[36px] text-slate-500 hover:bg-slate-100 hover:text-slate-700 ${isExpanded ? "flex-row items-center px-3 py-1.5 w-full" : "flex-col items-center justify-center py-2 w-full gap-1"}`}
                   title="切换"
                 >
                   <span className="scale-100 transition-transform shrink-0">
                     <ArrowRightLeft size={18} />
                   </span>
-                  {width > 120 && (
+                  {isExpanded ? (
                     <span
                       className="ml-3 text-[12px] whitespace-nowrap overflow-hidden transition-all duration-300"
                       style={{ opacity: width > 160 ? 1 : 0, width: width > 160 ? "auto" : 0 }}
                     >
+                      切换
+                    </span>
+                  ) : (
+                    <span className="text-[10px] leading-none whitespace-nowrap scale-90">
                       切换
                     </span>
                   )}
@@ -336,7 +348,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <div className="p-2 border-t border-slate-100 bg-slate-50/50 flex flex-col gap-2 shrink-0 overflow-hidden">
+      <div className="p-2 border-t border-slate-100 bg-white flex flex-col gap-2 shrink-0 overflow-hidden">
         <div
           className={`flex flex-col bg-white border border-slate-200 rounded-xl p-0.5 gap-0.5 ${!isExpanded && "items-center"}`}
         >
@@ -344,8 +356,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onModeToggle("dev")}
             className={`flex items-center gap-2 p-1.5 rounded-lg transition-all w-full ${
               interfaceMode === "dev"
-                ? "bg-blue-600 text-white shadow-sm"
-                : "text-slate-400 hover:bg-slate-50"
+                ? "bg-primary text-white shadow-sm"
+                : "text-slate-500 hover:bg-black/5"
             } ${!isExpanded && "justify-center"}`}
             title="设置管理"
           >
@@ -363,8 +375,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onModeToggle("user")}
             className={`flex items-center gap-2 p-1.5 rounded-lg transition-all w-full ${
               interfaceMode === "user"
-                ? "bg-emerald-600 text-white shadow-sm"
-                : "text-slate-400 hover:bg-slate-50"
+                ? "bg-primary text-white shadow-sm"
+                : "text-slate-500 hover:bg-black/5"
             } ${!isExpanded && "justify-center"}`}
             title="用户菜单"
           >
@@ -399,10 +411,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       {showSearchModal && (
         <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh]">
           <div
-            className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             onClick={() => setShowSearchModal(false)}
           ></div>
-          <div className="relative bg-white rounded-xl shadow-2xl w-[500px] max-w-[90vw] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
+          <div className="relative bg-white rounded-xl shadow-lg w-[500px] max-w-[90vw] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
             <div className="flex items-center px-4 py-3 border-b border-slate-100">
               <Search size={18} className="text-slate-400 mr-3" />
               <input
@@ -413,20 +425,20 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
               <button
                 onClick={() => setShowSearchModal(false)}
-                className="p-1 text-slate-400 hover:bg-slate-100 rounded-md transition-colors"
+                className="p-1 text-slate-400 hover:bg-black/5 rounded-md transition-colors"
               >
                 <X size={16} />
               </button>
             </div>
-            <div className="p-2 bg-slate-50/50">
+            <div className="p-2 bg-slate-50">
               <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                 最近搜索
               </div>
               <div className="px-2 pb-2">
-                <div className="px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg cursor-pointer transition-colors flex items-center gap-2">
+                <div className="px-3 py-2 text-[12px] text-slate-600 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors flex items-center gap-2">
                   <History size={14} className="opacity-50" /> 财务报表
                 </div>
-                <div className="px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg cursor-pointer transition-colors flex items-center gap-2">
+                <div className="px-3 py-2 text-[12px] text-slate-600 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors flex items-center gap-2">
                   <History size={14} className="opacity-50" /> 月度关账
                 </div>
               </div>

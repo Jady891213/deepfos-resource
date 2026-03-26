@@ -111,7 +111,7 @@ export const BudgetContent: React.FC = () => {
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-[3px] h-3.5 rounded-xs bg-[#9369E6] shrink-0" />
+              <div className="w-[3px] h-3.5 rounded-xs bg-primary shrink-0" />
               <div className="text-[10px] w-9 inline-block text-[#86909C] font-['PingFangSC-Regular','PingFang_SC',system-ui,sans-serif] leading-3 shrink-0">
                 展示层
               </div>

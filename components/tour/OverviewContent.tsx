@@ -6,7 +6,7 @@ export const OverviewContent: React.FC = () => {
       <div className="flex flex-col grow shrink basis-[0%] gap-2.5">
         <div className="flex shrink-0 gap-2.5">
           <div className="flex items-center rounded-lg py-[7px] px-3 gap-1.5 bg-white border border-solid border-[#E8EAED]">
-            <div className="text-[20px] inline-block text-[#9369E6] font-['Inter',system-ui,sans-serif] font-bold leading-6">
+            <div className="text-[20px] inline-block text-primary font-['Inter',system-ui,sans-serif] font-bold leading-6">
               12
             </div>
             <div className="text-[12px] inline-block text-[#86909C] font-['PingFangSC-Regular','PingFang_SC',system-ui,sans-serif] leading-4">
@@ -40,7 +40,7 @@ export const OverviewContent: React.FC = () => {
         </div>
         <div className="flex flex-col rounded-[10px] py-3 px-3.5 gap-1.5 bg-white border border-solid border-[#E8EAED]">
           <div className="flex items-center gap-2">
-            <div className="w-1 h-3.5 rounded-xs bg-[#9369E6] shrink-0" />
+            <div className="w-1 h-3.5 rounded-xs bg-primary shrink-0" />
             <div className="text-[12px] inline-block text-[#1D2129] font-['PingFangSC-Semibold','PingFang_SC',system-ui,sans-serif] font-semibold leading-4">
               展示与交互层
             </div>
@@ -53,7 +53,7 @@ export const OverviewContent: React.FC = () => {
           </div>
           <div className="flex gap-2.5">
             <div className="flex items-center grow shrink basis-[0%] rounded-lg py-2.5 px-3.5 gap-2.5 bg-[#FAF9FE] border border-solid border-[#ECE8F8]">
-              <div className="flex items-center justify-center shrink-0 rounded-lg bg-[#9369E6] size-9">
+              <div className="flex items-center justify-center shrink-0 rounded-lg bg-primary size-9">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
                   <line x1="3" y1="9" x2="21" y2="9" />
@@ -68,7 +68,7 @@ export const OverviewContent: React.FC = () => {
                   DeepTable
                 </div>
               </div>
-              <div className="ml-auto text-[18px] inline-block text-[#9369E6] font-['Inter',system-ui,sans-serif] font-bold leading-[22px]">
+              <div className="ml-auto text-[18px] inline-block text-primary font-['Inter',system-ui,sans-serif] font-bold leading-[22px]">
                 24
               </div>
               <div className="flex ml-1 gap-[3px]">
@@ -78,7 +78,7 @@ export const OverviewContent: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center grow shrink basis-[0%] rounded-lg py-2.5 px-3.5 gap-2.5 bg-[#FAF9FE] border border-solid border-[#ECE8F8]">
-              <div className="flex items-center justify-center shrink-0 rounded-lg bg-[#9369E6] size-9">
+              <div className="flex items-center justify-center shrink-0 rounded-lg bg-primary size-9">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
                   <rect x="7" y="7" width="4" height="4" rx="1" />
@@ -94,7 +94,7 @@ export const OverviewContent: React.FC = () => {
                   Page Designer
                 </div>
               </div>
-              <div className="ml-auto text-[18px] inline-block text-[#9369E6] font-['Inter',system-ui,sans-serif] font-bold leading-[22px]">
+              <div className="ml-auto text-[18px] inline-block text-primary font-['Inter',system-ui,sans-serif] font-bold leading-[22px]">
                 15
               </div>
               <div className="flex ml-1 gap-[3px]">

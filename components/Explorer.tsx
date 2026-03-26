@@ -62,10 +62,22 @@ const MODULE_DATA: Record<string, ResourceItem[]> = {
       { id: 'res_ux_2', name: '费用报销明细', code: 'EXPENSE_DETAIL', type: 'spreadsheet', version: '2.1', createdBy: 'admin', updatedAt: '2025-05-11' },
     ]},
   ],
-  'finance_center': [
-    { id: 'fc_1', name: '资金月报', code: 'CASH_MONTHLY', type: 'spreadsheet', version: 'v1', createdBy: 'liuqing', updatedAt: '2025-05-20' },
-    { id: 'fc_2', name: '利润分析表', code: 'PROFIT_ANALYSIS', type: 'ux', version: 'v2', createdBy: 'admin', updatedAt: '2025-05-21' },
-    { id: 'fc_3', name: '现金流量墙', code: 'CASH_FLOW_WALL', type: 'ux', version: 'v1.1', createdBy: 'liuqing', updatedAt: '2025-05-22' },
+  'salary_budget': [
+    { id: 'sb_group_1', name: '人岗编制', code: 'GRP_1', type: 'group', version: '', createdBy: '', updatedAt: '', children: [
+      { id: 'sb_1_1', name: '员工异动编制', code: 'EMP_CHANGE', type: 'spreadsheet', version: 'v1', createdBy: 'liuqing', updatedAt: '2025-05-20' },
+      { id: 'sb_1_2', name: '异动变更记录', code: 'CHANGE_LOG', type: 'spreadsheet', version: 'v1', createdBy: 'liuqing', updatedAt: '2025-05-20' },
+      { id: 'sb_1_3', name: '薪酬结果明细', code: 'SALARY_DETAIL', type: 'spreadsheet', version: 'v1', createdBy: 'liuqing', updatedAt: '2025-05-20' },
+    ]},
+    { id: 'sb_group_2', name: '总量测算编制', code: 'GRP_2', type: 'group', version: '', createdBy: '', updatedAt: '', children: [
+      { id: 'sb_2_1', name: '门店总量编制', code: 'STORE_TOTAL', type: 'ux', version: 'v2', createdBy: 'admin', updatedAt: '2025-05-21' },
+      { id: 'sb_2_2', name: '工厂总量编制', code: 'FACTORY_TOTAL', type: 'ux', version: 'v2', createdBy: 'admin', updatedAt: '2025-05-21' },
+    ]},
+    { id: 'sb_group_3', name: '财务报表', code: 'GRP_3', type: 'group', version: '', createdBy: '', updatedAt: '', children: [
+      { id: 'sb_3_1', name: '人力成本报表', code: 'HR_COST', type: 'ux', version: 'v1.1', createdBy: 'liuqing', updatedAt: '2025-05-22' },
+    ]},
+    { id: 'sb_group_4', name: '后台管理', code: 'GRP_4', type: 'group', version: '', createdBy: '', updatedAt: '', children: [
+      { id: 'sb_4_1', name: '计算日志', code: 'CALC_LOG', type: 'ux', version: 'v1.1', createdBy: 'liuqing', updatedAt: '2025-05-22' },
+    ]},
   ],
   'finance_master_data': [
     { id: 'md_1', name: '会计主体维度', code: 'DIM_ENTITY', type: 'model', version: 'v3', createdBy: 'liuqing', updatedAt: '2025-05-18' },
@@ -99,7 +111,7 @@ const CONSOLE_ITEMS = [
   { id: 'c1', name: 'DeepModel 控制台', icon: <Database size={14} className="text-purple-500" /> },
   { id: 'c2', name: '数据流监控', icon: <Zap size={14} className="text-amber-500" /> },
   { id: 'c3', name: '工作流监控', icon: <Activity size={14} className="text-emerald-500" /> },
-  { id: 'c4', name: '工作流待办', icon: <ListTodo size={14} className="text-blue-500" /> },
+  { id: 'c4', name: '工作流待办', icon: <ListTodo size={14} className="text-primary" /> },
 ];
 
 const getIconForType = (type: ResourceType) => {
@@ -109,7 +121,7 @@ const getIconForType = (type: ResourceType) => {
     case 'logic': return <Workflow size={14} className="text-sky-500" />;
     case 'workflow': return <Cpu size={14} className="text-indigo-500" />;
     case 'spreadsheet': return <Grid3X3 size={14} className="text-emerald-500" />;
-    case 'ux': return <Layout size={14} className="text-blue-500" />;
+    case 'ux': return <Layout size={14} className="text-primary" />;
     case 'accounting': return <HistoryIcon size={14} className="text-rose-500" />;
     case 'script': return <Terminal size={14} className="text-slate-500" />;
     default: return <FileText size={14} className="text-slate-400" />;
@@ -136,7 +148,7 @@ const Explorer: React.FC<ExplorerProps> = ({
   const [showCode, setShowCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  const [contextHeight, setContextHeight] = useState(400); 
+  const [contextHeight, setContextHeight] = useState(typeof window !== 'undefined' ? window.innerHeight / 2 : 400); 
   const [isResizingContext, setIsResizingContext] = useState(false);
 
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
@@ -152,7 +164,8 @@ const Explorer: React.FC<ExplorerProps> = ({
       const explorerRect = document.querySelector('.explorer-container')?.getBoundingClientRect();
       if (!explorerRect) return;
       const newHeight = explorerRect.bottom - e.clientY;
-      setContextHeight(Math.max(120, Math.min(newHeight, 650)));
+      const maxHeight = typeof window !== 'undefined' ? window.innerHeight * 0.8 : 800;
+      setContextHeight(Math.max(120, Math.min(newHeight, maxHeight)));
     };
     const handleMouseUp = () => setIsResizingContext(false);
     if (isResizingContext) {
@@ -274,17 +287,17 @@ const Explorer: React.FC<ExplorerProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-white select-none relative border-r border-slate-100 explorer-container overflow-hidden">
-      <div className="h-14 flex items-center px-4 justify-between border-b border-slate-100 bg-white shrink-0">
+      <div className="h-14 flex items-center px-4 justify-between bg-white shrink-0">
         <div className="flex items-center gap-2">
           <span className="font-bold text-slate-800 tracking-tight text-[13px] uppercase">
-            {activeModule === 'recent_fav' ? '最近打开' : (isUserMode ? '业务模块' : '资源管理')}
+            {activeModule === 'recent_fav' ? '最近打开' : (isUserMode ? '业务模块' : '全量资源')}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={() => setShowCode(!showCode)} className={`p-1.5 rounded transition-all active:scale-90 ${showCode ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-50'}`} title="切换代码/名称显示">
+          <button onClick={() => setShowCode(!showCode)} className={`p-1.5 rounded transition-all active:scale-90 ${showCode ? 'bg-primary text-white shadow-sm' : 'text-slate-500 hover:bg-black/5'}`} title="切换代码/名称显示">
             {showCode ? <Code2 size={15} /> : <Eye size={15} />}
           </button>
-          <button onClick={onToggleCollapse} className="p-1.5 text-slate-400 hover:bg-slate-50 rounded" title="收起目录栏"><PanelLeftClose size={15} /></button>
+          <button onClick={onToggleCollapse} className="p-1.5 text-slate-500 hover:bg-black/5 rounded" title="收起目录栏"><PanelLeftClose size={15} /></button>
         </div>
       </div>
 
@@ -292,28 +305,28 @@ const Explorer: React.FC<ExplorerProps> = ({
         <div className="p-2 space-y-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-            <input type="text" placeholder="搜索资源..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded py-1.5 pl-8 pr-3 text-[12px] outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm" />
+            <input type="text" placeholder="搜索资源..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-slate-100 border border-slate-200 rounded-md py-1.5 pl-8 pr-3 text-[12px] outline-none focus:border-primary focus:bg-white focus:shadow-input transition-all" />
           </div>
 
           {!isUserMode && activeModule !== 'recent_fav' && (
             <div className="flex items-center gap-1.5">
               <div className="relative flex-1">
-                <button onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)} className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-white border border-slate-200 rounded text-[12px] hover:border-blue-500 transition-colors">
-                  <Compass size={14} className="text-blue-600" />
+                <button onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)} className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-white border border-slate-200 rounded-md text-[12px] hover:border-primary transition-colors">
+                  <Compass size={14} className="text-primary" />
                   <span className="flex-1 text-left font-medium text-slate-700 truncate">{filterTypeLabel}</span>
                   <ChevronDown size={12} className="text-slate-400" />
                 </button>
                 {isFilterMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsFilterMenuOpen(false)}></div>
-                    <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-100 rounded shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top">
+                    <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-100 rounded-md shadow-lg z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top">
                       {[
                         { label: '全量资源', icon: <Compass size={13} /> },
                         { label: '页面展现', icon: <Layout size={13} /> },
                         { label: '数据模型', icon: <Database size={13} /> },
                         { label: '流程逻辑', icon: <Workflow size={13} /> }
                       ].map(type => (
-                        <button key={type.label} onClick={() => { setFilterTypeLabel(type.label); setIsFilterMenuOpen(false); }} className={`w-full flex items-center gap-2.5 px-3 py-2 text-[12px] hover:bg-blue-50 transition-colors ${filterTypeLabel === type.label ? 'text-blue-600 font-bold bg-blue-50/50' : 'text-slate-600'}`}>
+                        <button key={type.label} onClick={() => { setFilterTypeLabel(type.label); setIsFilterMenuOpen(false); }} className={`w-full flex items-center gap-2.5 px-3 py-2 text-[12px] hover:bg-black/5 transition-colors ${filterTypeLabel === type.label ? 'text-primary font-bold bg-primary/10' : 'text-slate-600'}`}>
                           {type.icon} {type.label}
                         </button>
                       ))}
@@ -321,16 +334,16 @@ const Explorer: React.FC<ExplorerProps> = ({
                   </>
                 )}
               </div>
-              <button className="p-1.5 border border-slate-200 rounded hover:bg-slate-50 text-slate-400 hover:text-blue-600" title="新建资源"><Plus size={18} /></button>
+              <button className="p-1.5 border border-slate-200 rounded-md hover:bg-black/5 text-slate-500 hover:text-primary" title="新建资源"><Plus size={18} /></button>
               <div className="relative">
-                <button onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)} className="p-1.5 border border-slate-200 rounded hover:bg-slate-50 text-slate-400 hover:text-blue-600" title="更多"><MoreVertical size={18} /></button>
+                <button onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)} className="p-1.5 border border-slate-200 rounded-md hover:bg-black/5 text-slate-500 hover:text-primary" title="更多"><MoreVertical size={18} /></button>
                 {isMoreMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsMoreMenuOpen(false)}></div>
-                    <div className="absolute top-full right-0 mt-1 w-40 bg-white border border-slate-100 rounded shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top-right">
-                      <button onClick={() => setIsMoreMenuOpen(false)} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 transition-colors"><Locate size={14} /> 定位当前元素</button>
-                      <button onClick={() => { setIsMoreMenuOpen(false); setExpanded(Object.fromEntries(currentTree.map(d => [d.id, true]))); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 transition-colors"><ChevronLast size={14} className="rotate-90" /> 展开所有</button>
-                      <button onClick={() => { setIsMoreMenuOpen(false); setExpanded({}); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-blue-50 transition-colors"><ChevronFirst size={14} className="rotate-90" /> 收起所有</button>
+                    <div className="absolute top-full right-0 mt-1 w-40 bg-white border border-slate-100 rounded-md shadow-lg z-50 py-1 animate-in fade-in zoom-in duration-100 origin-top-right">
+                      <button onClick={() => setIsMoreMenuOpen(false)} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-black/5 transition-colors"><Locate size={14} /> 定位当前元素</button>
+                      <button onClick={() => { setIsMoreMenuOpen(false); setExpanded(Object.fromEntries(currentTree.map(d => [d.id, true]))); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-black/5 transition-colors"><ChevronLast size={14} className="rotate-90" /> 展开所有</button>
+                      <button onClick={() => { setIsMoreMenuOpen(false); setExpanded({}); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-slate-600 hover:bg-black/5 transition-colors"><ChevronFirst size={14} className="rotate-90" /> 收起所有</button>
                     </div>
                   </>
                 )}
@@ -345,7 +358,7 @@ const Explorer: React.FC<ExplorerProps> = ({
               <div className="px-1">
                 <button onClick={() => toggleGroup('fav')} className="w-full flex items-center justify-between p-1.5 mb-1 text-slate-400 bg-slate-50/50 rounded hover:bg-slate-100/50 transition-colors">
                   <div className="flex items-center gap-2">
-                    <Pin size={14} className="text-blue-600 rotate-45" fill="currentColor" />
+                    <Pin size={14} className="text-primary rotate-45" fill="currentColor" />
                     <span className="text-[11px] font-black uppercase tracking-widest">常用</span>
                   </div>
                   {groupsExpanded.fav ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -355,11 +368,11 @@ const Explorer: React.FC<ExplorerProps> = ({
                     {filteredPinned.length > 0 ? filteredPinned.map(item => {
                       const isOpen = tabs.some(t => t.id === item.id);
                       return (
-                        <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer group transition-all hover:bg-blue-50/50">
+                        <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 rounded cursor-pointer group transition-all hover:bg-primary/5">
                           {getIconForType(item.type)}
                           <span className={`text-[12px] truncate flex-1 transition-all ${isOpen ? 'text-slate-700 font-medium' : 'text-slate-500'}`}>{showCode ? item.code : item.name}</span>
-                          {isOpen && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full opacity-60"></div>}
-                          <button className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-all" onClick={(e) => { e.stopPropagation(); handleUnpin(item.id); }}><PinOff size={12} /></button>
+                          {isOpen && <div className="w-1.5 h-1.5 bg-primary rounded-full opacity-60"></div>}
+                          <button className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-primary hover:bg-primary/10 rounded transition-all" onClick={(e) => { e.stopPropagation(); handleUnpin(item.id); }}><PinOff size={12} /></button>
                         </div>
                       );
                     }) : <div className="p-3 text-[11px] text-slate-300 text-center italic">暂无常用项</div>}
@@ -369,7 +382,7 @@ const Explorer: React.FC<ExplorerProps> = ({
 
               <div className="px-1">
                 <button onClick={() => toggleGroup('recent')} className="w-full flex items-center justify-between p-1.5 mb-1 text-slate-400 bg-slate-50/50 rounded hover:bg-slate-100/50 transition-colors">
-                  <div className="flex items-center gap-2"><Clock size={14} className="text-blue-600" /><span className="text-[11px] font-black uppercase tracking-widest">最近</span></div>
+                  <div className="flex items-center gap-2"><Clock size={14} className="text-primary" /><span className="text-[11px] font-black uppercase tracking-widest">最近</span></div>
                   {groupsExpanded.recent ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                 </button>
                 {groupsExpanded.recent && (
@@ -377,14 +390,14 @@ const Explorer: React.FC<ExplorerProps> = ({
                     {activeOpenedTabs.map(item => {
                       const isPinned = pinnedItems.some(p => p.id === item.id);
                       return (
-                        <div key={item.id} onClick={() => onSelectResource({ id: item.id, name: item.title, type: item.type, code: item.code })} className={`flex items-center gap-2 p-1.5 rounded cursor-pointer group transition-all ${activeTab?.id === item.id ? 'bg-blue-600/5 shadow-inner' : 'hover:bg-blue-50/50'}`}>
+                        <div key={item.id} onClick={() => onSelectResource({ id: item.id, name: item.title, type: item.type, code: item.code })} className={`flex items-center gap-2 p-1.5 rounded cursor-pointer group transition-all ${activeTab?.id === item.id ? 'bg-primary/5 shadow-inner' : 'hover:bg-primary/5'}`}>
                           {getIconForType(item.type as ResourceType)}
-                          <span className={`text-[12px] truncate flex-1 transition-all ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-700 font-medium'}`}>{showCode ? (item.code || item.title) : item.title}</span>
+                          <span className={`text-[12px] truncate flex-1 transition-all ${activeTab?.id === item.id ? 'text-primary font-bold' : 'text-slate-700 font-medium'}`}>{showCode ? (item.code || item.title) : item.title}</span>
                           <div className="flex items-center">
-                            <button className={`p-1 rounded transition-all ${isPinned ? 'text-blue-600 opacity-40' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`} onClick={(e) => { e.stopPropagation(); if (!isPinned) handlePin(item); }} title="固定到常用">
+                            <button className={`p-1 rounded transition-all ${isPinned ? 'text-primary opacity-40' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-primary hover:bg-primary/10'}`} onClick={(e) => { e.stopPropagation(); if (!isPinned) handlePin(item); }} title="固定到常用">
                               <Pin size={12} fill={isPinned ? "currentColor" : "none"} />
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); onCloseTab(item.id); }} className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-rose-500 rounded hover:bg-rose-50 transition-all"><X size={12} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); onCloseTab(item.id); }} className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 rounded hover:bg-red-50 transition-all"><X size={12} /></button>
                           </div>
                         </div>
                       );
@@ -399,7 +412,7 @@ const Explorer: React.FC<ExplorerProps> = ({
                           <div className="opacity-30 grayscale shrink-0">{getIconForType(item.type)}</div>
                           <span className={`text-[12px] truncate flex-1 text-slate-400 group-hover:text-slate-500 transition-colors`}>{showCode ? item.code : item.name}</span>
                           <button 
-                            className={`p-1.5 rounded transition-all z-10 ${isPinned ? 'text-blue-600 opacity-40' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`} 
+                            className={`p-1.5 rounded transition-all z-10 ${isPinned ? 'text-primary opacity-40' : 'opacity-0 group-hover:opacity-100 text-slate-300 hover:text-primary hover:bg-primary/10'}`} 
                             onClick={(e) => { 
                               e.stopPropagation(); 
                               if (!isPinned) handlePin(item); 
@@ -416,30 +429,51 @@ const Explorer: React.FC<ExplorerProps> = ({
               </div>
             </div>
           ) : (
-            currentTree.map(dir => (
-              <div key={dir.id} className="mb-0.5">
-                <div onClick={() => toggleExpand(dir.id)} className="flex items-center gap-2 p-1.5 hover:bg-slate-100/60 rounded cursor-pointer group">
-                  <div className="w-4 h-4 flex items-center justify-center shrink-0">{expanded[dir.id] ? <ChevronDown size={12} className="text-slate-400" /> : <ChevronRight size={12} className="text-slate-400" />}</div>
-                  {getIconForType('folder')}<span className="text-[12px] font-medium text-slate-600 truncate">{showCode ? dir.code : dir.name}</span>
-                </div>
-                {expanded[dir.id] && dir.children && (
-                  <div className="ml-5 border-l border-slate-100 mt-0.5 mb-1">
-                    {dir.children.map(item => (
-                      <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 pl-4 hover:bg-blue-50/50 rounded cursor-pointer group relative">{getIconForType(item.type)}<span className={`text-[12px] truncate flex-1 transition-colors ${activeTab?.id === item.id ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>{showCode ? item.code : item.name}</span></div>
-                    ))}
+            currentTree.map(dir => {
+              if (dir.type === 'group') {
+                return (
+                  <div key={dir.id} className="mb-4">
+                    <div className="px-2 mb-2">
+                      <span className="text-[12px] font-bold text-slate-400">{showCode ? dir.code : dir.name}</span>
+                    </div>
+                    {dir.children && (
+                      <div className="flex flex-col gap-0.5">
+                        {dir.children.map(item => (
+                          <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 px-2 hover:bg-slate-100 rounded cursor-pointer group relative">
+                            <span className="text-slate-400">{getIconForType(item.type)}</span>
+                            <span className={`text-[12px] truncate flex-1 transition-colors ${activeTab?.id === item.id ? 'text-primary font-bold' : 'text-slate-600'}`}>{showCode ? item.code : item.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))
+                );
+              }
+              return (
+                <div key={dir.id} className="mb-0.5">
+                  <div onClick={() => toggleExpand(dir.id)} className="flex items-center gap-2 p-1.5 hover:bg-slate-100/60 rounded cursor-pointer group">
+                    <div className="w-4 h-4 flex items-center justify-center shrink-0">{expanded[dir.id] ? <ChevronDown size={12} className="text-slate-400" /> : <ChevronRight size={12} className="text-slate-400" />}</div>
+                    {getIconForType('folder')}<span className="text-[12px] font-medium text-slate-600 truncate">{showCode ? dir.code : dir.name}</span>
+                  </div>
+                  {expanded[dir.id] && dir.children && (
+                    <div className="ml-5 border-l border-slate-100 mt-0.5 mb-1">
+                      {dir.children.map(item => (
+                        <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-center gap-2 p-1.5 pl-4 hover:bg-primary/5 rounded cursor-pointer group relative">{getIconForType(item.type)}<span className={`text-[12px] truncate flex-1 transition-colors ${activeTab?.id === item.id ? 'text-primary font-bold' : 'text-slate-500'}`}>{showCode ? item.code : item.name}</span></div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>
 
       <div style={{ height: showContext ? `${contextHeight}px` : '0px', opacity: showContext ? 1 : 0 }} className="border-t border-slate-200 bg-slate-50/80 flex flex-col shrink-0 relative transition-all duration-300 ease-in-out overflow-hidden z-10">
-        <div onMouseDown={() => setIsResizingContext(true)} className="absolute top-0 left-0 w-full h-1 cursor-row-resize hover:bg-blue-400/30 z-50 active:bg-blue-500 transition-colors" />
+        <div onMouseDown={() => setIsResizingContext(true)} className="absolute top-0 left-0 w-full h-1 cursor-row-resize hover:bg-primary/20 z-50 active:bg-primary transition-colors" />
         <div className="h-9 flex items-center px-3 justify-between border-b border-slate-200 bg-white">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            {lockedDrawerType === 'console' ? <><Terminal size={12} className="text-blue-600" /> 控制台</> : <><Info size={12} className="text-blue-600" /> 元素信息</>}
+            {lockedDrawerType === 'console' ? <><Terminal size={12} className="text-primary" /> 控制台</> : <><Info size={12} className="text-primary" /> 元素信息</>}
           </span>
           <button onClick={onCloseContext} className="p-1 hover:bg-slate-100 rounded text-slate-400"><ChevronDown size={14} /></button>
         </div>
@@ -447,7 +481,7 @@ const Explorer: React.FC<ExplorerProps> = ({
           {lockedDrawerType === 'console' ? (
             <div className="grid grid-cols-1 gap-1">
               {CONSOLE_ITEMS.map(item => (
-                <button key={item.id} onClick={() => onSelectResource({ id: item.id, name: item.name, type: 'page' })} className="flex items-center gap-3 p-2 rounded-lg text-[12px] text-slate-600 bg-white border border-slate-100 hover:border-blue-300 hover:bg-blue-50/30 hover:text-blue-600 transition-all text-left shadow-sm group">
+                <button key={item.id} onClick={() => onSelectResource({ id: item.id, name: item.name, type: 'page' })} className="flex items-center gap-3 p-2 rounded-lg text-[12px] text-slate-600 bg-white border border-slate-100 hover:border-primary/30 hover:bg-primary/5 hover:text-primary transition-all text-left shadow-sm group">
                   <span className="shrink-0 transition-transform group-hover:scale-110">{item.icon}</span>
                   <span className="truncate flex-1 font-medium">{item.name}</span>
                 </button>
@@ -461,22 +495,22 @@ const Explorer: React.FC<ExplorerProps> = ({
               </div>
               
               <section className="space-y-1.5">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={11} className="text-blue-600" /> 权限 & 版本</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={11} className="text-primary" /> 权限 & 版本</h4>
                 <div className="bg-white border border-slate-100 rounded-lg p-2 text-[11px] space-y-1.5">
-                  <div className="flex justify-between items-center"><span className="text-slate-500">负责人:</span><span className="text-blue-600 font-bold bg-blue-50 px-1.5 rounded">liuqing</span></div>
+                  <div className="flex justify-between items-center"><span className="text-slate-500">负责人:</span><span className="text-primary font-bold bg-primary/10 px-1.5 rounded">liuqing</span></div>
                   <div className="flex justify-between items-center"><span className="text-slate-500">版本:</span><span className="text-slate-400 font-mono">v1.2.0</span></div>
                   <div className="flex justify-between items-center"><span className="text-slate-500">最近更新:</span><span className="text-slate-400">{activeTab.updatedAt || '刚刚'}</span></div>
                 </div>
               </section>
 
               <section className="space-y-2">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Link size={11} className="text-blue-600" /> 关联元素 (Depends On)</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Link size={11} className="text-primary" /> 关联元素 (Depends On)</h4>
                 <div className="space-y-1.5">
                   {[{ id: 'dep_1', name: 'BUDGET_DIM_01', type: 'model' as ResourceType }, { id: 'dep_2', name: 'USER_MAPPING_SCRIPT', type: 'logic' as ResourceType }].map(item => (
-                    <div key={item.id} className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded text-[11px] text-slate-600 group/item hover:border-blue-200 transition-all">
+                    <div key={item.id} className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded text-[11px] text-slate-600 group/item hover:border-primary/30 transition-all">
                       {getIconForType(item.type)}
-                      <span className="flex-1 truncate group-hover/item:text-blue-600">{item.name}</span>
-                      <button onClick={() => onSelectResource(item)} className="p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded" title="查看详情"><ExternalLink size={12} /></button>
+                      <span className="flex-1 truncate group-hover/item:text-primary">{item.name}</span>
+                      <button onClick={() => onSelectResource(item)} className="p-1 text-slate-300 hover:text-primary hover:bg-primary/10 rounded" title="查看详情"><ExternalLink size={12} /></button>
                     </div>
                   ))}
                 </div>
@@ -485,10 +519,10 @@ const Explorer: React.FC<ExplorerProps> = ({
               <section className="space-y-2">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ArrowRightLeft size={11} className="text-amber-600" /> 被关联元素 (Referenced By)</h4>
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded text-[11px] text-slate-600 group/item hover:border-blue-200 transition-all">
-                    <Layout size={12} className="text-blue-500" />
-                    <span className="flex-1 truncate group-hover/item:text-blue-600">FIN_MAIN_DASHBOARD</span>
-                    <button onClick={() => onSelectResource({ id: 'ref_1', name: 'FIN_MAIN_DASHBOARD', type: 'ux' })} className="p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded" title="查看详情"><ExternalLink size={12} /></button>
+                  <div className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded text-[11px] text-slate-600 group/item hover:border-primary/30 transition-all">
+                    <Layout size={12} className="text-primary" />
+                    <span className="flex-1 truncate group-hover/item:text-primary">FIN_MAIN_DASHBOARD</span>
+                    <button onClick={() => onSelectResource({ id: 'ref_1', name: 'FIN_MAIN_DASHBOARD', type: 'ux' })} className="p-1 text-slate-300 hover:text-primary hover:bg-primary/10 rounded" title="查看详情"><ExternalLink size={12} /></button>
                   </div>
                 </div>
               </section>

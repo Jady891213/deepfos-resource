@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-export type ResourceType = 'folder' | 'page' | 'logic' | 'model' | 'stream' | 'connector' | 'component' | 'workflow' | 'db' | 'script' | 'chart' | 'ux' | 'spreadsheet' | 'accounting';
+export type ResourceType = 'folder' | 'page' | 'logic' | 'model' | 'stream' | 'connector' | 'component' | 'workflow' | 'db' | 'script' | 'chart' | 'ux' | 'spreadsheet' | 'accounting' | 'group';
 
 export interface ResourceItem {
   id: string;
@@ -45,6 +45,7 @@ export type ModuleId =
   | 'resources' 
   | 'finance' 
   | 'finance_center'
+  | 'salary_budget'
   | 'finance_master_data'
   | 'closing_management'
   | 'context'

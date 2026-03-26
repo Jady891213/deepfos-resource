@@ -24,7 +24,7 @@ const SystemTour: React.FC = () => {
           </div>
           <div className="flex rounded-lg py-[3px] px-[3px] gap-1 bg-[#F0F2F5]">
             <div 
-              className={`rounded-md py-1.5 px-4 cursor-pointer transition-colors ${activeTab === 'overview' ? 'bg-[#9369E6]' : ''}`}
+              className={`rounded-md py-1.5 px-4 cursor-pointer transition-colors ${activeTab === 'overview' ? 'bg-primary' : ''}`}
               onClick={() => setActiveTab('overview')}
             >
               <div className={`inline-block text-[13px] leading-4 ${activeTab === 'overview' ? "text-white font-['PingFangSC-Medium','PingFang_SC',system-ui,sans-serif] font-medium" : "text-[#4E5969] font-['PingFangSC-Regular','PingFang_SC',system-ui,sans-serif]"}`}>
@@ -63,7 +63,7 @@ const SystemTour: React.FC = () => {
               </div>
             </div>
             {activeTab === 'overview' && (
-              <div className="rounded-md py-1.5 px-3.5 bg-[#9369E6] cursor-pointer hover:bg-[#8254D8]">
+              <div className="rounded-md py-1.5 px-3.5 bg-primary cursor-pointer hover:bg-primary-hover">
                 <div className="inline-block text-[12px] text-white font-['PingFangSC-Medium','PingFang_SC',system-ui,sans-serif] font-medium leading-4">
                   开始构建
                 </div>
