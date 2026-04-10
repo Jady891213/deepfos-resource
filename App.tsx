@@ -28,6 +28,38 @@ import Explorer from './components/Explorer';
 import MainContent from './components/MainContent';
 import AIAssistant from './components/AIAssistant';
 import SystemTour from './components/SystemTour';
+import TourGuide, { TourStep } from './components/TourGuide';
+
+const TOUR_STEPS: TourStep[] = [
+  {
+    id: 'mode-switch',
+    target: '[data-tour="mode-switch"]',
+    title: '模式切换',
+    content: '您可以在这里随时切换“设置管理”和“用户菜单”模式，体验不同角色下的系统视图。',
+    placement: 'right'
+  },
+  {
+    id: 'dev-items',
+    target: ['[data-tour="dev-items"]', '[data-tour="explorer-panel"]'],
+    title: '工作台与资源管理',
+    content: '工作台包含了您最近访问的资源和全量资源库。左侧为功能入口，右侧为您展示对应的二级资源目录，方便您快速定位和管理所有资产。',
+    placement: 'right'
+  },
+  {
+    id: 'quick-tools',
+    target: ['[data-tour="quick-tools"]', '[data-tour="explorer-panel"]'],
+    title: '快速工具与面板',
+    content: '快速工具提供了控制台和元素信息等辅助面板。点击后会在右侧展开对应的二级面板，帮助您在开发和配置过程中随时查看运行状态和上下文。',
+    placement: 'right'
+  },
+  {
+    id: 'bottom-tools',
+    target: '[data-tour="bottom-tools"]',
+    title: '系统辅助',
+    content: '在这里您可以找到系统导览、元素管理以及进入高级空间设置的入口。',
+    placement: 'right'
+  }
+];
 
 const INITIAL_DATA: ResourceItem[] = [
   {
@@ -82,6 +114,9 @@ const App: React.FC = () => {
 
   // 空间工作台确认弹窗状态
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
+  // Tour Guide 状态
+  const [isTourOpen, setIsTourOpen] = useState(false);
 
   const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
 
@@ -205,6 +240,8 @@ const App: React.FC = () => {
       if (!isExplorerHidden) setIsExplorerHidden(true);
     } else if (id === 'settings-redirect') {
       setShowSettingsModal(true);
+    } else if (id === 'restart-tour') {
+      setIsTourOpen(true);
     } else {
       setActiveModule(id as ModuleId);
       if (isExplorerHidden) setIsExplorerHidden(false);
@@ -217,6 +254,13 @@ const App: React.FC = () => {
     setActiveModule(mode === 'dev' ? 'resources' : 'finance_center');
     setActiveDrawerModule(null);
     if (isExplorerHidden) setIsExplorerHidden(false);
+    
+    if (mode === 'dev') {
+      const hasDismissed = localStorage.getItem('deepfos_tour_dismissed');
+      if (!hasDismissed) {
+        setTimeout(() => setIsTourOpen(true), 300);
+      }
+    }
   };
 
   const handleTabContextMenu = (e: React.MouseEvent, id: string) => {
@@ -316,7 +360,10 @@ const App: React.FC = () => {
             onModeToggle={handleModeToggle}
           />
 
-          <div className={`flex-1 flex flex-col border-l border-slate-100 bg-white relative overflow-hidden transition-all duration-300 ${isExplorerHidden ? 'opacity-0' : 'opacity-100'}`}>
+          <div 
+            className={`flex-1 flex flex-col border-l border-slate-100 bg-white relative overflow-hidden transition-all duration-300 ${isExplorerHidden ? 'opacity-0' : 'opacity-100'}`}
+            data-tour="explorer-panel"
+          >
             <div className="flex-1 flex flex-col min-h-0">
               <Explorer 
                 key={`${activeModule}-${interfaceMode}`} 
@@ -427,6 +474,30 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      <TourGuide
+        steps={TOUR_STEPS}
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+        onComplete={() => setIsTourOpen(false)}
+        onDismissForever={() => {
+          localStorage.setItem('deepfos_tour_dismissed', 'true');
+          setIsTourOpen(false);
+        }}
+        onStepChange={(index) => {
+          const step = TOUR_STEPS[index];
+          if (step.id === 'dev-items') {
+            setActiveModule('resources');
+            setActiveDrawerModule(null);
+            setIsExplorerHidden(false);
+          } else if (step.id === 'quick-tools') {
+            setActiveDrawerModule('context');
+            setIsExplorerHidden(false);
+          } else if (step.id === 'bottom-tools') {
+            setActiveDrawerModule(null);
+          }
+        }}
+      />
     </div>
   );
 };

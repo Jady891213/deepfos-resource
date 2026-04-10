@@ -503,29 +503,37 @@ const Explorer: React.FC<ExplorerProps> = ({
                 </div>
               </section>
 
-              <section className="space-y-2">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Link size={11} className="text-primary" /> 关联元素 (Depends On)</h4>
-                <div className="space-y-1.5">
-                  {[{ id: 'dep_1', name: 'BUDGET_DIM_01', type: 'model' as ResourceType }, { id: 'dep_2', name: 'USER_MAPPING_SCRIPT', type: 'logic' as ResourceType }].map(item => (
-                    <div key={item.id} className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded text-[11px] text-slate-600 group/item hover:border-primary/30 transition-all">
-                      {getIconForType(item.type)}
-                      <span className="flex-1 truncate group-hover/item:text-primary">{item.name}</span>
-                      <button onClick={() => onSelectResource(item)} className="p-1 text-slate-300 hover:text-primary hover:bg-primary/10 rounded" title="查看详情"><ExternalLink size={12} /></button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className="space-y-2">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ArrowRightLeft size={11} className="text-amber-600" /> 被关联元素 (Referenced By)</h4>
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded text-[11px] text-slate-600 group/item hover:border-primary/30 transition-all">
-                    <Layout size={12} className="text-primary" />
-                    <span className="flex-1 truncate group-hover/item:text-primary">FIN_MAIN_DASHBOARD</span>
-                    <button onClick={() => onSelectResource({ id: 'ref_1', name: 'FIN_MAIN_DASHBOARD', type: 'ux' })} className="p-1 text-slate-300 hover:text-primary hover:bg-primary/10 rounded" title="查看详情"><ExternalLink size={12} /></button>
+              <div className="grid grid-cols-2 gap-3">
+                <section className="space-y-2">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Link size={11} className="text-primary" /> 关联元素</h4>
+                  <div className="space-y-1.5">
+                    {[{ id: 'dep_1', name: '预算维度01', code: 'BUDGET_DIM_01', type: 'model' as ResourceType }, { id: 'dep_2', name: '用户映射脚本', code: 'USER_MAPPING_SCRIPT', type: 'logic' as ResourceType }].map(item => (
+                      <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-start gap-2 p-2 bg-white border border-slate-100 rounded text-[11px] text-slate-600 group/item hover:border-primary/30 hover:bg-primary/5 cursor-pointer transition-all">
+                        <div className="mt-0.5">{getIconForType(item.type)}</div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="truncate font-bold text-slate-700 group-hover/item:text-primary">{item.name}</span>
+                          <span className="truncate text-[9px] text-slate-400 font-mono">{item.code}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              </section>
+                </section>
+
+                <section className="space-y-2">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><ArrowRightLeft size={11} className="text-amber-600" /> 被关联元素</h4>
+                  <div className="space-y-1.5">
+                    {[{ id: 'ref_1', name: '财务主看板', code: 'FIN_MAIN_DASHBOARD', type: 'ux' as ResourceType }].map(item => (
+                      <div key={item.id} onClick={() => onSelectResource(item)} className="flex items-start gap-2 p-2 bg-white border border-slate-100 rounded text-[11px] text-slate-600 group/item hover:border-primary/30 hover:bg-primary/5 cursor-pointer transition-all">
+                        <div className="mt-0.5">{getIconForType(item.type)}</div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="truncate font-bold text-slate-700 group-hover/item:text-primary">{item.name}</span>
+                          <span className="truncate text-[9px] text-slate-400 font-mono">{item.code}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale p-4"><Info size={32} className="mb-2" /><p className="text-[10px] font-bold uppercase tracking-widest">未选择元素</p></div>

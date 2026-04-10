@@ -104,6 +104,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const bottomTools = [
     {
+      id: "restart-tour",
+      icon: <Info size={18} />,
+      label: "设置指引",
+      isAction: true,
+    },
+    {
       id: "system-tour",
       icon: <Map size={18} />,
       label: "系统导览",
@@ -181,6 +187,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
+      data-tour="sidebar"
       style={{ width: `${width}px` }}
       className={`relative h-full border-r border-slate-200 flex flex-col bg-white shrink-0 z-10 ${isResizing ? "" : "transition-[width] duration-300 ease-in-out"}`}
     >
@@ -192,7 +199,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 flex flex-col py-2 overflow-y-auto no-scrollbar gap-5">
         {interfaceMode === "dev" ? (
           <>
-            <div className="overflow-hidden">
+            <div className="overflow-hidden" data-tour="dev-items">
               {width > 120 && (
                 <div
                   className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity"
@@ -210,7 +217,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             <div className="mx-3 h-[1px] bg-slate-100" />
 
-            <div className="overflow-hidden">
+            <div className="overflow-hidden" data-tour="quick-tools">
               {width > 120 && (
                 <div
                   className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity"
@@ -226,7 +233,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               )}
             </div>
 
-            <div className="mt-auto overflow-hidden">
+            <div className="mt-auto overflow-hidden" data-tour="bottom-tools">
               {width > 120 && (
                 <div
                   className="px-5 mb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest transition-opacity"
@@ -348,7 +355,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <div className="p-2 border-t border-slate-100 bg-white flex flex-col gap-2 shrink-0 overflow-hidden">
+      <div className="p-2 border-t border-slate-100 bg-white flex flex-col gap-2 shrink-0 overflow-hidden" data-tour="mode-switch">
         <div
           className={`flex flex-col bg-white border border-slate-200 rounded-xl p-0.5 gap-0.5 ${!isExpanded && "items-center"}`}
         >
