@@ -117,6 +117,14 @@ const App: React.FC = () => {
   
   // Tour Guide 状态
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [showTourHint, setShowTourHint] = useState(false);
+
+  useEffect(() => {
+    if (showTourHint) {
+      const timer = setTimeout(() => setShowTourHint(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showTourHint]);
 
   const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
 
@@ -358,6 +366,8 @@ const App: React.FC = () => {
             isResizing={isResizing}
             interfaceMode={interfaceMode}
             onModeToggle={handleModeToggle}
+            showTourHint={showTourHint}
+            onDismissTourHint={() => setShowTourHint(false)}
           />
 
           <div 
@@ -478,11 +488,12 @@ const App: React.FC = () => {
       <TourGuide
         steps={TOUR_STEPS}
         isOpen={isTourOpen}
-        onClose={() => setIsTourOpen(false)}
-        onComplete={() => setIsTourOpen(false)}
+        onClose={() => { setIsTourOpen(false); setShowTourHint(true); }}
+        onComplete={() => { setIsTourOpen(false); setShowTourHint(true); }}
         onDismissForever={() => {
           localStorage.setItem('deepfos_tour_dismissed', 'true');
           setIsTourOpen(false);
+          setShowTourHint(true);
         }}
         onStepChange={(index) => {
           const step = TOUR_STEPS[index];

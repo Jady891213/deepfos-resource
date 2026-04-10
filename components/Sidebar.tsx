@@ -33,6 +33,8 @@ interface SidebarProps {
   isResizing: boolean;
   interfaceMode: "dev" | "user";
   onModeToggle: (mode: "dev" | "user") => void;
+  showTourHint?: boolean;
+  onDismissTourHint?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -47,10 +49,24 @@ const Sidebar: React.FC<SidebarProps> = ({
   isResizing,
   interfaceMode,
   onModeToggle,
+  showTourHint,
+  onDismissTourHint,
 }) => {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showMenuDropdown, setShowMenuDropdown] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+
+  const hintTargetRef = useRef<HTMLButtonElement>(null);
+  const [hintPos, setHintPos] = useState({ top: 0, left: 0, show: false });
+
+  useEffect(() => {
+    if (showTourHint && hintTargetRef.current) {
+      const rect = hintTargetRef.current.getBoundingClientRect();
+      setHintPos({ top: rect.top + rect.height / 2, left: rect.right + 12, show: true });
+    } else {
+      setHintPos(prev => ({ ...prev, show: false }));
+    }
+  }, [showTourHint, width, isExpanded]);
 
   useEffect(() => {
     setShowMenuDropdown(false);
@@ -149,39 +165,49 @@ const Sidebar: React.FC<SidebarProps> = ({
     clickHandler: (id: string) => void,
   ) => (
     <div className="px-2 flex flex-col gap-0.5">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => clickHandler(item.id)}
-          className={`flex rounded-lg transition-colors group relative min-h-[36px] ${
-            isActive(item.id)
-              ? "bg-primary/10 text-primary font-bold shadow-sm"
-              : "text-slate-500 hover:bg-black/5 hover:text-slate-700"
-          } ${isExpanded ? "flex-row items-center px-3 py-1.5 w-full" : "flex-col items-center justify-center py-2 w-full gap-1"}`}
-          title={!isExpanded ? item.label : undefined}
-        >
-          <span
-            className={`${isActive(item.id) ? "scale-105" : "scale-100"} transition-transform shrink-0`}
-          >
-            {item.icon}
-          </span>
-          {isExpanded ? (
-            <span
-              className="ml-3 text-[12px] whitespace-nowrap overflow-hidden transition-all duration-300"
-              style={{
-                opacity: width > 160 ? 1 : 0,
-                width: width > 160 ? "auto" : 0,
+      {items.map((item) => {
+        const isHintTarget = item.id === 'restart-tour' && showTourHint;
+        return (
+          <div key={item.id} className="relative">
+            <button
+              ref={isHintTarget ? hintTargetRef : null}
+              onClick={() => {
+                if (isHintTarget && onDismissTourHint) onDismissTourHint();
+                clickHandler(item.id);
               }}
+              className={`flex rounded-lg transition-colors group relative min-h-[36px] ${
+                isActive(item.id)
+                  ? "bg-primary/10 text-primary font-bold shadow-sm"
+                  : "text-slate-500 hover:bg-black/5 hover:text-slate-700"
+              } ${isExpanded ? "flex-row items-center px-3 py-1.5 w-full" : "flex-col items-center justify-center py-2 w-full gap-1"} ${
+                isHintTarget ? "ring-2 ring-primary ring-offset-2 animate-pulse bg-primary/10 text-primary" : ""
+              }`}
+              title={!isExpanded ? item.label : undefined}
             >
-              {item.label}
-            </span>
-          ) : (
-            <span className="text-[10px] leading-none whitespace-nowrap scale-90">
-              {item.label}
-            </span>
-          )}
-        </button>
-      ))}
+              <span
+                className={`${isActive(item.id) || isHintTarget ? "scale-105" : "scale-100"} transition-transform shrink-0`}
+              >
+                {item.icon}
+              </span>
+              {isExpanded ? (
+                <span
+                  className="ml-3 text-[12px] whitespace-nowrap overflow-hidden transition-all duration-300"
+                  style={{
+                    opacity: width > 160 ? 1 : 0,
+                    width: width > 160 ? "auto" : 0,
+                  }}
+                >
+                  {item.label}
+                </span>
+              ) : (
+                <span className="text-[10px] leading-none whitespace-nowrap scale-90">
+                  {item.label}
+                </span>
+              )}
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 
@@ -451,6 +477,20 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {hintPos.show && (
+        <div
+          className="fixed bg-primary text-white text-[12px] px-3 py-2 rounded-lg shadow-xl whitespace-nowrap z-[9999] animate-in fade-in slide-in-from-left-2 flex items-center gap-2"
+          style={{ top: `${hintPos.top}px`, left: `${hintPos.left}px`, transform: 'translateY(-50%)' }}
+        >
+          <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-primary rotate-45 rounded-sm"></div>
+          <Info size={14} className="opacity-80" />
+          <span>随时可以在这里重新打开指引</span>
+          <button onClick={(e) => { e.stopPropagation(); if(onDismissTourHint) onDismissTourHint(); }} className="ml-1 p-0.5 hover:bg-white/20 rounded transition-colors">
+            <X size={12} />
+          </button>
         </div>
       )}
     </aside>

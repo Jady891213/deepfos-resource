@@ -236,10 +236,7 @@ const TourGuide: React.FC<TourGuideProps> = ({ steps, isOpen, onClose, onComplet
           </div>
         </div>
         
-        <div className="px-5 py-2 bg-slate-100/50 border-t border-slate-100 flex items-center justify-between text-[11px]">
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-800 transition-colors">
-            临时跳过
-          </button>
+        <div className="px-5 py-2 bg-slate-100/50 border-t border-slate-100 flex items-center justify-end text-[11px]">
           <button onClick={onDismissForever} className="text-slate-400 hover:text-red-500 transition-colors">
             不再提醒
           </button>
